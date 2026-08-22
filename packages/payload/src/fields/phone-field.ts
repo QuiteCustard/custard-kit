@@ -2,9 +2,8 @@ import type { TextField } from 'payload'
 import { componentField, type ComponentFieldOverrides } from '../internal/component-field.js'
 
 /**
- * A text field rendered by a custom phone-input admin component. `component` is the path Payload
- * resolves for `admin.components.Field` - this package ships no UI, so the consumer's own
- * component is a required parameter, not a default.
+ * A text field rendered by a custom phone-input admin component. `component` is required: the
+ * import path of your own component, as Payload resolves it for `admin.components.Field`.
  *
  * ```ts
  * phoneField('@/components/phone/Phone', { name: 'phone', required: true })

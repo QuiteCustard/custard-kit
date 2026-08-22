@@ -46,9 +46,9 @@ shows on hover — this page is the map, not the reference.
 
 ### `fields/` — field and admin-config factories
 
-This package ships no UI, so every field rendered by a custom component takes that component's
-import path as a **required** parameter rather than assuming one. Each is a factory, never a shared
-constant: `buildConfig` sanitises field objects in place, so two collections must not receive one.
+Every field rendered by a custom component takes that component's import path as a **required**
+parameter — pass your own. Each is a factory, never a shared constant: `buildConfig` sanitises field
+objects in place, so two collections must not receive one.
 
 - `link-field` — polymorphic link (internal reference, custom URL, optional static route, dropdown,
   phone, email); each type appears only if its collection or component was supplied

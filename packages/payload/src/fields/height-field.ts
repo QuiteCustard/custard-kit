@@ -2,9 +2,8 @@ import type { NumberField } from 'payload'
 import { componentField, type ComponentFieldOverrides } from '../internal/component-field.js'
 
 /**
- * A number field rendered by a custom height-input admin component. `component` is the path
- * Payload resolves for `admin.components.Field` - this package ships no UI, so the consumer's own
- * component is a required parameter, not a default.
+ * A number field rendered by a custom height-input admin component. `component` is required: the
+ * import path of your own component, as Payload resolves it for `admin.components.Field`.
  *
  * ```ts
  * heightField('@/components/height-input/HeightInput')

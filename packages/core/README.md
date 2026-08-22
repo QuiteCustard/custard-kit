@@ -41,9 +41,5 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
   never has to know which locales a project ships.
 - `media/image-mime` verifies that `<svg` is the document's **root** element — an HTML page with an
   inline `<svg>` is rejected, since browsers execute script in anything served as `image/svg+xml`.
-  It is hand-rolled rather than delegating to `file-type` because that package detects binary
-  formats only and explicitly excludes SVG, which is half of what an upload validator needs.
-- There is no country list here on purpose. Use `i18n-iso-countries` in the consuming project, so
-  labels can be localised — and sorted _after_ translation rather than fixed in English order.
 
 MIT licensed. Source: [custard-kit](https://github.com/QuiteCustard/custard-kit).

@@ -120,7 +120,7 @@ pnpm -r publish       # topological: core, then payload and services
   version being published. `npm publish` ships the literal `workspace:^` and the tarball is broken.
 - `pnpm publish` refuses to run on a dirty tree or off `main`/`master`. It does NOT skip a package
   whose version is already on the registry: it retries it, takes a 403 (`cannot publish over the
-  previously published versions`) and **aborts the whole run**, so anything after it in the
+previously published versions`) and **aborts the whole run**, so anything after it in the
   topological order never publishes. Bump the version in each package that changed, or publish the
   remainder with `pnpm --filter <pkg> publish`.
 - A scoped package is RESTRICTED unless the registry is told otherwise, and a restricted package

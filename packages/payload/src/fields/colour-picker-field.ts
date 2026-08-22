@@ -2,9 +2,9 @@ import type { TextField } from 'payload'
 import { componentField, type ComponentFieldOverrides } from '../internal/component-field.js'
 
 /**
- * A text field rendered by a custom colour-picker admin component. `component` is the path Payload
- * resolves for `admin.components.Field` (e.g. `@/components/colour-picker/ColourPicker`) - this
- * package ships no UI, so the consumer's own component is a required parameter, not a default.
+ * A text field rendered by a custom colour-picker admin component. `component` is required: the
+ * import path of your own component (e.g. `@/components/colour-picker/ColourPicker`), as Payload
+ * resolves it for `admin.components.Field`.
  *
  * ```ts
  * colourField('@/components/colour-picker/ColourPicker', { name: 'colour', label: 'Colour' })
