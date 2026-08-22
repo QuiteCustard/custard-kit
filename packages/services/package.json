@@ -1,6 +1,6 @@
 {
   "name": "@quitecustard/services",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Thin serverless-shaped API clients for Discord, Steam, start.gg and Twitch, plus Claude-vision OCR that reads an image into whatever shape the caller declares",
   "keywords": [
     "discord",

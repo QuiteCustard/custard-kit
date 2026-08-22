@@ -1,6 +1,6 @@
 {
   "name": "@quitecustard/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Framework-free TypeScript helpers: name/slug normalisation and transliteration, profanity filtering, magic-byte mime sniffing, small utils",
   "keywords": [
     "slug",
