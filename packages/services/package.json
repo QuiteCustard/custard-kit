@@ -1,0 +1,61 @@
+{
+  "name": "@quitecustard/services",
+  "version": "0.1.0",
+  "description": "Thin serverless-shaped API clients for Discord, Steam, start.gg and Twitch, plus Claude-vision OCR that reads an image into whatever shape the caller declares",
+  "keywords": [
+    "discord",
+    "steam",
+    "start.gg",
+    "twitch",
+    "ocr",
+    "api-client",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "QuiteCustard",
+  "homepage": "https://github.com/QuiteCustard/custard-kit/tree/HEAD/packages/services#readme",
+  "bugs": "https://github.com/QuiteCustard/custard-kit/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuiteCustard/custard-kit.git",
+    "directory": "packages/services"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@quitecustard/core": "workspace:^",
+    "discord-api-types": "^0.38.15"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "^0.104.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
+    "@types/node": "22.19.9"
+  }
+}

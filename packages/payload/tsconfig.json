@@ -1,0 +1,25 @@
+{
+  // The EDITOR and typecheck project. It covers everything under `src` - modules, tests and
+  // fixtures - so VS Code resolves a test file against this rather than falling back to an inferred
+  // project with no `paths`, which is what puts a red squiggle on every aliased fixture import.
+  //
+  // It emits nothing, so it declares no `rootDir`: the aliases below resolve into a sibling
+  // package's `src`, which sits outside this one and would fail a rootDir check. `tsconfig.build.json`
+  // is what emits.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    // Wider than the ES2022 the build targets, so a test may assert with a method the runtime floor
+    // (node >= 20) has but no shipped module calls - `String.prototype.isWellFormed` being the one.
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    // Mirrors the vitest aliases, so a cross-package import is checked against that package's
+    // SOURCE - the same thing the tests actually run against.
+    "paths": {
+      "@quitecustard/core/*": ["../core/src/*"],
+      "@quitecustard/payload/*": ["../payload/src/*"],
+      "@quitecustard/services/*": ["../services/src/*"]
+    }
+  },
+  "include": ["src"]
+}

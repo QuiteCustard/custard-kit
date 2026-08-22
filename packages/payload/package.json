@@ -1,0 +1,77 @@
+{
+  "name": "@quitecustard/payload",
+  "version": "0.1.0",
+  "description": "Payload v3 helpers: relation narrowing, transactions, autosave-vs-unpublish detection, sync locks, unique slugs and usernames",
+  "keywords": [
+    "payload",
+    "payloadcms",
+    "cms",
+    "helpers",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "QuiteCustard",
+  "homepage": "https://github.com/QuiteCustard/custard-kit/tree/HEAD/packages/payload#readme",
+  "bugs": "https://github.com/QuiteCustard/custard-kit/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuiteCustard/custard-kit.git",
+    "directory": "packages/payload"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./internal/*": null,
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@quitecustard/core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@payloadcms/drizzle": "^3.0.0",
+    "@payloadcms/plugin-seo": "^3.0.0",
+    "drizzle-orm": "^0.45.0",
+    "next": "^16.0.0",
+    "payload": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@payloadcms/drizzle": {
+      "optional": true
+    },
+    "drizzle-orm": {
+      "optional": true
+    },
+    "@payloadcms/plugin-seo": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@payloadcms/db-vercel-postgres": "3.88.0",
+    "@payloadcms/drizzle": "3.88.0",
+    "@payloadcms/plugin-seo": "3.88.0",
+    "@types/node": "22.19.9",
+    "drizzle-orm": "0.45.2",
+    "next": "16.3.1",
+    "payload": "3.88.0"
+  }
+}

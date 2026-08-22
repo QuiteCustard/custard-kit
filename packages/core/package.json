@@ -1,0 +1,54 @@
+{
+  "name": "@quitecustard/core",
+  "version": "0.1.0",
+  "description": "Framework-free TypeScript helpers: name/slug normalisation and transliteration, profanity filtering, magic-byte mime sniffing, small utils",
+  "keywords": [
+    "slug",
+    "normalise",
+    "transliterate",
+    "profanity",
+    "mime",
+    "utils",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "QuiteCustard",
+  "homepage": "https://github.com/QuiteCustard/custard-kit/tree/HEAD/packages/core#readme",
+  "bugs": "https://github.com/QuiteCustard/custard-kit/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuiteCustard/custard-kit.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "obscenity": "^0.4.6",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.9"
+  }
+}

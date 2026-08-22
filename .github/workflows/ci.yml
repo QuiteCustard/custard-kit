@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # A current LTS. The packages declare `engines: node >=20`, which is the runtime floor;
+          # this job is not proving that floor, only that the kit builds and passes on a supported
+          # Node.
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # build + typecheck + lint + test, the same command `pnpm release` runs before publishing.
+      - run: pnpm verify
+
+      # Catches a manifest that would publish a broken tarball - a missing `files` entry, an
+      # unbuilt dist - without publishing anything.
+      - run: pnpm -r publish --dry-run --no-git-checks

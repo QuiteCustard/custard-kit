@@ -1,0 +1,5 @@
+packages:
+  - packages/*
+allowBuilds:
+  bufferutil: false
+  esbuild: false
