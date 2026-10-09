@@ -1,6 +1,6 @@
 {
   "name": "@quitecustard/payload",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Payload v3 helpers: relation narrowing, transactions, autosave-vs-unpublish detection, sync locks, unique slugs and usernames",
   "keywords": [
     "payload",
