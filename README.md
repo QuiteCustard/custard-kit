@@ -23,6 +23,8 @@ Framework-free. No peer dependencies.
 - `media/` — image-mime, video-mime (magic-byte sniffing)
 - `url/` — stream-target (Twitch/YouTube URL parsing), link-protocol (href protocol allowlist for
   author-editable URL fields)
+- `styles/` — container.css, the `.ck-container` full-bleed grid as plain CSS, widths and gap
+  read from custom properties the project sets
 
 Notes:
 
@@ -99,6 +101,10 @@ they never ship.
 ```
 pnpm add @quitecustard/core @quitecustard/payload @quitecustard/services
 ```
+
+Every subpath carries `import` and `default` conditions, so a script that still runs as CommonJS
+(`tsx` in a project without `"type": "module"`) can `require()` a module on Node 22+, which loads
+ESM under `require`.
 
 Alternatives:
 

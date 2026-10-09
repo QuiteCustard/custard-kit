@@ -55,6 +55,10 @@ export const isoToDateInput = (iso: string | null | undefined): string => {
  * in scope (e.g. from `date-fns/locale`) so month/weekday tokens (MMM, EEE) render in that
  * language; omit it for date-fns's own default (US English).
  *
+ * A `Date` instance reaches `format` unchanged, so a zone-carrying subclass such as `UTCDate` from
+ * `@date-fns/utc` or `TZDate` from `@date-fns/tz` renders in its own zone rather than the
+ * machine's. Strings and epochs are parsed as `new Date` would.
+ *
  * ```ts
  * import { enGB } from 'date-fns/locale'
  * formatDate(new Date(), 'd MMM yyyy', enGB)
@@ -64,4 +68,4 @@ export const formatDate = (
   date: Date | string | number,
   pattern: string,
   locale?: DateFnsLocale,
-): string => format(new Date(date), pattern, locale ? { locale } : undefined)
+): string => format(date, pattern, locale ? { locale } : undefined)

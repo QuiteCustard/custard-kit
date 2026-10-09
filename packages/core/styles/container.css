@@ -1,0 +1,59 @@
+/*
+ * Full-bleed container grid. Children sit in a centred column with a gutter either side; a child
+ * with the `col-span-full` class runs edge to edge.
+ *
+ *   @import 'tailwindcss';
+ *   @import '@quitecustard/core/styles/container.css';
+ *
+ *   <main class="ck-container">
+ *     <h1>…</h1>                                 centred column
+ *     <section class="col-span-full">…</section>  full width
+ *   </main>
+ *
+ * Works with the defaults below as is. To change them, set either of these on `:root` from any
+ * file or layer, no ordering rule applies:
+ *
+ *   --ck-container-width   centre column cap, 1400px
+ *   --ck-container-gap     minimum gutter either side, 1rem, 2rem from 1280px
+ *
+ *   :root { --ck-container-width: 1120px; }
+ *
+ * Both are read on the container itself, so setting one on a single element widens or tightens
+ * just that container:
+ *
+ *   <main class="ck-container" style="--ck-container-width: 1600px">
+ *
+ * A project that sets `--ck-container-gap` replaces both steps and restates the media query
+ * itself.
+ *
+ * Everything sits in the `components` layer so a Tailwind grid utility on a child (`col-start-*`,
+ * `col-span-*`) still wins over the centre-column placement. In a Tailwind v4 stylesheet import it
+ * after `tailwindcss` so that layer is already ordered before `utilities`. `col-span-full` here
+ * sets what Tailwind's utility of the same name sets, so full bleed needs no Tailwind.
+ */
+@layer components {
+  .ck-container {
+    --_ck-width: var(--ck-container-width, 1400px);
+    --_ck-gap: var(--ck-container-gap, 1rem);
+
+    display: grid;
+    grid-template-columns:
+      1fr min(var(--_ck-width), calc(100% - var(--_ck-gap) * 2))
+      1fr;
+    column-gap: var(--_ck-gap);
+  }
+
+  @media (min-width: 1280px) {
+    .ck-container {
+      --_ck-gap: var(--ck-container-gap, 2rem);
+    }
+  }
+
+  .ck-container > * {
+    grid-column: 2;
+  }
+
+  .ck-container > .col-span-full {
+    grid-column: 1 / -1;
+  }
+}

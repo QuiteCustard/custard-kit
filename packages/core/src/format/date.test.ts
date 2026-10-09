@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { UTCDate } from '@date-fns/utc'
 import { enGB } from 'date-fns/locale'
 import {
   dateInputToIso,
@@ -103,5 +104,13 @@ describe('formatDate', () => {
 
   it('falls back to the default locale when none is given', () => {
     expect(formatDate(stamp, 'EEEE')).toBe('Friday')
+  })
+
+  // A `Date` must reach date-fns unchanged. Re-wrapping it in `new Date(value)` would keep the
+  // instant but drop the subclass, so a UTCDate would render in the machine's zone instead of UTC.
+  it('keeps the zone of a Date subclass such as UTCDate', () => {
+    expect(formatDate(new UTCDate(2026, 7, 21, 23, 30), 'yyyy-MM-dd HH:mm')).toBe(
+      '2026-08-21 23:30',
+    )
   })
 })

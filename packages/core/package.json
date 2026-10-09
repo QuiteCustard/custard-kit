@@ -26,15 +26,18 @@
   },
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "styles"
   ],
   "publishConfig": {
     "access": "public"
   },
   "exports": {
+    "./styles/*": "./styles/*",
     "./*": {
       "types": "./dist/*.d.ts",
-      "import": "./dist/*.js"
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
     }
   },
   "scripts": {
@@ -49,6 +52,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@date-fns/utc": "^2.1.1",
     "@types/node": "22.19.9"
   }
 }

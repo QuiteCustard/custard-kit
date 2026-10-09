@@ -30,6 +30,9 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
 - `url/stream-target` — Twitch/YouTube URL parsing
 - `url/link-protocol` — validateLinkUrl / isHttpUrl / sanitiseHttpUrl: a protocol allowlist for an
   author-editable href, so `javascript:` and `data:` can't reach an anchor
+- `styles/container.css` — the `.ck-container` full-bleed grid: children sit in a centred
+  column capped at `--ck-container-width`, a child with `col-span-full` runs edge to edge.
+  Plain CSS, shipped as-is, not a module
 
 ## Notes
 
@@ -41,5 +44,20 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
   never has to know which locales a project ships.
 - `media/image-mime` verifies that `<svg` is the document's **root** element — an HTML page with an
   inline `<svg>` is rejected, since browsers execute script in anything served as `image/svg+xml`.
+- `styles/container.css` works with its defaults as is. To change them, set
+  `--ck-container-width` or `--ck-container-gap` on `:root` from any file or layer, or on
+  one container element to affect only it; the fallbacks are 1400px and 1rem (2rem from 1280px). In
+  a Tailwind v4 stylesheet, import it after `tailwindcss`: the class lives in the `components` layer
+  so grid utilities on a child still win. `col-span-full` is defined inside the container too, so
+  full bleed needs no Tailwind.
+
+  ```css
+  @import 'tailwindcss';
+  @import '@quitecustard/core/styles/container.css';
+
+  :root {
+    --ck-container-width: 1120px;
+  }
+  ```
 
 MIT licensed. Source: [custard-kit](https://github.com/QuiteCustard/custard-kit).
