@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateStartggUrl } from './validate-url.js'
+import { validateStartggTournamentUrl, validateStartggUrl } from './validate-url.js'
 
 describe('validateStartggUrl', () => {
   it('parses an event URL into its two slugs', () => {
@@ -66,5 +66,58 @@ describe('validateStartggUrl', () => {
     expect(validateStartggUrl('https://start.gg/tournament/abc/event/singles')).toMatchObject({
       tournamentSlug: 'abc',
     })
+  })
+})
+
+describe('validateStartggTournamentUrl', () => {
+  it('parses a tournament URL into its slug', () => {
+    expect(validateStartggTournamentUrl('https://start.gg/tournament/abc')).toEqual({
+      tournamentSlug: 'abc',
+    })
+    expect(validateStartggTournamentUrl('https://www.start.gg/tournament/abc-2_x/')).toEqual({
+      tournamentSlug: 'abc-2_x',
+    })
+  })
+
+  it('reads any page beneath a tournament as that tournament', () => {
+    expect(validateStartggTournamentUrl('https://start.gg/tournament/abc/details')).toEqual({
+      tournamentSlug: 'abc',
+    })
+    expect(
+      validateStartggTournamentUrl('https://start.gg/tournament/abc/event/singles/brackets/1/2'),
+    ).toEqual({ tournamentSlug: 'abc' })
+    expect(validateStartggTournamentUrl('https://start.gg/tournament/abc?tab=events#top')).toEqual({
+      tournamentSlug: 'abc',
+    })
+  })
+
+  // A URL that merely CONTAINS "start.gg/tournament/x" is not a start.gg URL: the host decides.
+  it('refuses another host, however the path reads', () => {
+    expect(validateStartggTournamentUrl('https://evil.test/start.gg/tournament/abc')).toBe(
+      'Invalid Start.gg URL: domain must be start.gg',
+    )
+    expect(validateStartggTournamentUrl('https://start.gg.evil.test/tournament/abc')).toBe(
+      'Invalid Start.gg URL: domain must be start.gg',
+    )
+  })
+
+  it('refuses a URL that names no tournament', () => {
+    expect(typeof validateStartggTournamentUrl('https://start.gg/tournament')).toBe('string')
+    expect(typeof validateStartggTournamentUrl('https://start.gg/user/xyz')).toBe('string')
+    expect(typeof validateStartggTournamentUrl('https://start.gg/')).toBe('string')
+  })
+
+  it('refuses malformed input', () => {
+    expect(validateStartggTournamentUrl('not a url')).toBe('Invalid URL format')
+    expect(validateStartggTournamentUrl(`https://start.gg/tournament/${'a'.repeat(600)}`)).toBe(
+      'Invalid Start.gg URL: URL too long',
+    )
+  })
+
+  // The slug is interpolated into an API query, so anything outside [\w-] is refused.
+  it('refuses a slug with characters outside the allowlist', () => {
+    expect(validateStartggTournamentUrl('https://start.gg/tournament/a b')).toBe(
+      'Invalid Start.gg URL: slug contains invalid characters',
+    )
   })
 })

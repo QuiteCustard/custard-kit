@@ -26,7 +26,7 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
   pair (dateInputToIso / isoToDateInput), plus formatDate over date-fns
 - `format/amount` — `formatAmount(amount, symbol, intlLocale)`: locale-aware grouping with the
   caller's own currency symbol
-- `media/` — image-mime, video-mime (magic-byte sniffing, including SVG)
+- `media/` — image-mime, video-mime (magic-byte sniffing, including SVG and GIF)
 - `url/stream-target` — Twitch/YouTube URL parsing
 - `url/link-protocol` — validateLinkUrl / isHttpUrl / sanitiseHttpUrl: a protocol allowlist for an
   author-editable href, so `javascript:` and `data:` can't reach an anchor

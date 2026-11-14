@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   allowedExtensions,
+  detectGifMimeType,
   detectImageMimeType,
   detectSvgMimeType,
   isImageMediaType,
@@ -36,6 +37,33 @@ describe('detectImageMimeType', () => {
     expect(
       detectImageMimeType(bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x41, 0x56, 0x49, 0x20)),
     ).toBeNull()
+  })
+})
+
+describe('detectGifMimeType', () => {
+  it('accepts both GIF signatures', () => {
+    expect(detectGifMimeType(text('GIF89a....'))).toBe('image/gif')
+    expect(detectGifMimeType(text('GIF87a....'))).toBe('image/gif')
+    expect(detectGifMimeType(Buffer.from('GIF89a'))).toBe('image/gif')
+  })
+
+  // The first four bytes alone ("GIF8") are not a GIF: the version digit and the trailing "a" are
+  // part of the signature.
+  it('refuses a truncated or altered signature', () => {
+    expect(detectGifMimeType(text('GIF8'))).toBeNull()
+    expect(detectGifMimeType(text('GIF88a'))).toBeNull()
+    expect(detectGifMimeType(text('GIF89b'))).toBeNull()
+    expect(detectGifMimeType(text('gif89a'))).toBeNull()
+  })
+
+  it('rejects other images and empty input', () => {
+    expect(detectGifMimeType(png)).toBeNull()
+    expect(detectGifMimeType(jpeg)).toBeNull()
+    expect(detectGifMimeType(bytes())).toBeNull()
+  })
+
+  it('is not a type detectImageMimeType reports', () => {
+    expect(detectImageMimeType(text('GIF89a....'))).toBeNull()
   })
 })
 

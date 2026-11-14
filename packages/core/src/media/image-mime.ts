@@ -29,7 +29,8 @@ export const mimeToExtension: Record<ImageMediaType, string> = {
 /**
  * The real image type of an upload, read from its magic bytes rather than its filename or the
  * client-supplied Content-Type - both of which a caller controls. Returns null for anything that
- * isn't JPEG, PNG or WebP; SVG is text and needs `detectSvgMimeType` instead.
+ * isn't JPEG, PNG or WebP; SVG is text and needs `detectSvgMimeType` instead, and GIF has
+ * `detectGifMimeType`.
  *
  * ```ts
  * const mime = detectImageMimeType(buffer)
@@ -53,6 +54,29 @@ export const detectImageMimeType = (bytes: Uint8Array): ImageMediaType | null =>
     return 'image/webp'
 
   return null
+}
+
+/**
+ * GIF, read from its magic bytes: the six-byte signature `GIF87a` or `GIF89a`. Null for anything
+ * else.
+ *
+ * Its own function, like `detectSvgMimeType`, so `ImageMediaType` stays the three types
+ * `detectImageMimeType` returns. An upload route that also takes GIFs chains the two:
+ *
+ * ```ts
+ * const mime = detectImageMimeType(buffer) ?? detectGifMimeType(buffer)
+ * ```
+ */
+export const detectGifMimeType = (bytes: Uint8Array): 'image/gif' | null => {
+  const isGif =
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+    bytes[5] === 0x61
+
+  return isGif ? 'image/gif' : null
 }
 
 // An XML prolog, a doctype and comments may legally precede the root element, so they are skipped

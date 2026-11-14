@@ -9,6 +9,13 @@ describe('getInitials', () => {
     expect(getInitials('ada b lovelace')).toBe('AB')
   })
 
+  it('stops at one initial when asked', () => {
+    expect(getInitials('ada lovelace', 1)).toBe('A')
+    expect(getInitials('ada', 1)).toBe('A')
+    expect(getInitials('ada lovelace', 2)).toBe('AL')
+    expect(getInitials(null, 1)).toBe('')
+  })
+
   // A row whose name is null arrives as undefined however the caller typed it, and a throwing
   // helper turns one bad record into a failed page.
   it('is total, so a missing name yields an empty string', () => {
