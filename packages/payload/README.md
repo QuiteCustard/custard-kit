@@ -34,6 +34,8 @@ shows on hover — this page is the map, not the reference.
 - `published-where` — the published clause, stated once so a bypassing read and the access rule
   cannot drift apart
 - `collection-versions` — `draftVersions(maxPerDoc?)`: the autosave + schedulePublish shape
+- `lexical-plain-text` — `lexicalPlainText` / `lexicalNodeText`: a rich text value as plain text,
+  one block per line, for search indexes and excerpts
 
 ### `access/`
 

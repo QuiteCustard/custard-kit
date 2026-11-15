@@ -41,7 +41,8 @@ Helpers generic over any Payload v3 project. Peer deps: `payload` (required),
 Payload's module augmentation means the consumer's generated types flow through
 `CollectionSlug`-generic helpers automatically.
 
-- `documents/` — relation narrowing, localised reads, the published clause, version config
+- `documents/` — relation narrowing, localised reads, the published clause, version config, rich
+  text as plain text
 - `access/` — anyone/nobody, role gates, the self check across Payload's three field-access shapes
 - `fields/` — field and admin-config factories: link, hero, owner, SEO tab, colour, phone, height,
   size, spacing, layout, media-content. Ships no UI, so a custom component's path is a required
