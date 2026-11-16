@@ -19,7 +19,8 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
 
 ## Contents
 
-- `utils/` — sleep, is-record, one-of, numbers, safe-equal, form-data, slug-to-label, rgb-to-hex, cn
+- `utils/` — sleep, is-record, read-json, one-of, numbers, safe-equal, form-data, slug-to-label,
+  rgb-to-hex, cn, held, poll-loop
 - `format/` — normalise (transliteration/slug/IGN pipeline), get-initials, ordinal, sanitise-text,
   profanity
 - `format/date` — isValidDate, dateRangeReversed, dateRangeNotAfter, and the `<input type="datetime-local">` ↔ ISO
@@ -42,6 +43,13 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
   are constructor options, never baked into the module.
 - `utils/cn` exports plain `cn` plus `createCn(config)` for a project whose `@theme` declares custom
   tokens tailwind-merge would otherwise misclassify.
+- `utils/read-json` reads parsed JSON one step at a time — `field(field(body, 'team'), 'name')` —
+  so a parser checks each value it reads instead of asserting the body's whole shape.
+- `utils/held` is an in-memory cache for one server process (`createHeld({ maxEntries, keep })`):
+  values held for the seconds each caller asks, concurrent loads of a key shared, and nothing
+  written to a platform data cache that bills per write. On serverless each instance holds its own.
+- `utils/poll-loop` (`startPollLoop(poll, { intervalMs })`) needs a browser `document`: a hidden
+  page polls at most every 5 s and stops after 10 minutes hidden, both options.
 - `format/date` takes a date-fns `Locale` object directly rather than a locale string, so the kit
   never has to know which locales a project ships.
 - `media/image-mime` verifies that `<svg` is the document's **root** element — an HTML page with an

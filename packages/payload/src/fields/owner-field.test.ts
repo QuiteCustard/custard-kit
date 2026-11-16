@@ -74,6 +74,32 @@ describe('the owner stamp', () => {
     expect(setOwner(fieldHookArgs({ operation: 'create', withoutRequest: true }))).toBeNull()
   })
 
+  // The trap: with a second auth collection, the caller's id may belong to a different table
+  // than the one this relationship points at. Falling back to the supplied value for such a
+  // caller would let it name any owner it liked.
+  it('stamps nobody, and ignores the supplied value, for a caller getUserId refuses', () => {
+    const refusing = stamp(
+      ownerRelationship({
+        relationTo: 'users',
+        getUserId: (user) => (user.collection === 'users' ? user.id : null),
+      }),
+    )
+
+    expect(
+      refusing(
+        fieldHookArgs({
+          user: { id: 'k1', collection: 'api-keys' },
+          operation: 'create',
+          value: 9,
+        }),
+      ),
+    ).toBeNull()
+
+    expect(
+      refusing(fieldHookArgs({ user: { id: 3, collection: 'users' }, operation: 'create' })),
+    ).toBe(3)
+  })
+
   it('leaves the stored value alone on update', () => {
     expect(setOwner(fieldHookArgs({ user: { id: 3 }, operation: 'update', value: 9 }))).toBe(9)
     expect(setOwner(fieldHookArgs({ user: { id: 3 }, operation: 'update' }))).toBeUndefined()

@@ -1,12 +1,22 @@
-import type { Field, FieldAccess, FieldHook, RelationshipField } from 'payload'
+import type { Field, FieldAccess, FieldHook, RelationshipField, TypedUser } from 'payload'
 
-const makeSetOwner = (): FieldHook => {
+type GetUserId = (user: TypedUser) => unknown
+
+const defaultUserId: GetUserId = (user) => user.id
+
+const makeSetOwner = (getUserId: GetUserId): FieldHook => {
   const setOwner: FieldHook = ({ req, operation, value }) => {
-    // `?? value` rather than `?? null`: a Local API create (a seed, a migration, an import) carries
-    // no user, and discarding an explicitly supplied owner there would leave the row unowned.
-    if (operation === 'create') return req?.user?.id ?? value ?? null
+    if (operation !== 'create') return value
 
-    return value
+    const user = req?.user
+
+    // No caller at all: a Local API create (a seed, a migration, an import) carries no user, and
+    // discarding an explicitly supplied owner there would leave the row unowned.
+    if (!user) return value ?? null
+
+    // A caller who is not an owner-able account (`getUserId` answers null) stamps nobody. The
+    // supplied value is NOT a fallback here, or that caller could name any owner it liked.
+    return getUserId(user) ?? null
   }
 
   return setOwner
@@ -24,9 +34,17 @@ const makeSetOwner = (): FieldHook => {
  * ```ts
  * ownerField({ relationTo: 'users' }, { readAccess: staffFieldLevel })
  * ```
+ *
+ * `getUserId` resolves the id to stamp from the caller, defaulting to `user.id`. A project with
+ * more than one auth collection passes its own, returning null for a caller that is not an
+ * account `relationTo` can point at - an API-key client, say - so that caller's id is never
+ * written into a relationship to a different collection.
  */
 export const ownerField = (
-  { relationTo }: { relationTo: RelationshipField['relationTo'] },
+  {
+    relationTo,
+    getUserId = defaultUserId,
+  }: { relationTo: RelationshipField['relationTo']; getUserId?: GetUserId },
   {
     readAccess,
     ...overrides
@@ -55,7 +73,7 @@ export const ownerField = (
       ...admin,
     },
     hooks: {
-      beforeChange: [makeSetOwner()],
+      beforeChange: [makeSetOwner(getUserId)],
       ...hooks,
     },
     ...rest,

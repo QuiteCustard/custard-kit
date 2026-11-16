@@ -16,8 +16,8 @@ import { useActionRunner } from '@quitecustard/react/hooks/use-action-runner'
 
 Framework-free. No peer dependencies.
 
-- `utils/` — sleep, is-record, one-of, numbers, safe-equal, form-data, slug-to-label,
-  rgb-to-hex, cn
+- `utils/` — sleep, is-record, read-json, one-of, numbers, safe-equal, form-data, slug-to-label,
+  rgb-to-hex, cn, held, poll-loop
 - `format/` — normalise (transliteration/slug/IGN pipeline), get-initials, ordinal,
   sanitise-text, profanity, date (validity/range/datetime-input helpers +
   locale-aware `formatDate`), amount (locale-aware money formatting)
