@@ -1,12 +1,13 @@
 # custard-kit
 
-Reusable TypeScript helpers, as a pnpm workspace publishing three scoped packages. Each package
+Reusable TypeScript helpers, as a pnpm workspace publishing four scoped packages. Each package
 exposes one module per file — no barrels — so consumers import exactly what they use:
 
 ```ts
 import { normaliseSlug } from '@quitecustard/core/format/normalise'
 import { relId } from '@quitecustard/payload/documents/resolve-ref'
 import { verifyInteractionSignature } from '@quitecustard/services/discord/verify-interaction'
+import { useActionRunner } from '@quitecustard/react/hooks/use-action-runner'
 ```
 
 ## Packages
@@ -20,7 +21,8 @@ Framework-free. No peer dependencies.
 - `format/` — normalise (transliteration/slug/IGN pipeline), get-initials, ordinal,
   sanitise-text, profanity, date (validity/range/datetime-input helpers +
   locale-aware `formatDate`), amount (locale-aware money formatting)
-- `media/` — image-mime, video-mime (magic-byte sniffing)
+- `media/` — image-mime, video-mime (magic-byte sniffing), accent-colour (the colour a page borrows
+  from a logo or hero image, picked from raw pixel bytes)
 - `url/` — stream-target (Twitch/YouTube URL parsing), link-protocol (href protocol allowlist for
   author-editable URL fields)
 - `styles/` — container.css, the `.ck-container` full-bleed grid as plain CSS, widths and gap
@@ -37,7 +39,7 @@ Notes:
 
 Helpers generic over any Payload v3 project. Peer deps: `payload` (required),
 `@payloadcms/drizzle` + `drizzle-orm` (optional — only `db/`) and `next` (optional — only
-`operations/after-response`).
+`operations/after-response` and `operations/accent-colour-hook`).
 Payload's module augmentation means the consumer's generated types flow through
 `CollectionSlug`-generic helpers automatically.
 
@@ -51,7 +53,7 @@ Payload's module augmentation means the consumer's generated types flow through
   fields and their indexes. Postgres only.
 - `errors/` — the one reader for Payload's per-field messages, duplicate detection, a user-safe message
 - `operations/` — autosave-vs-unpublish, ref-counted context flags, deferred work, the job drain,
-  unique slugs and usernames
+  unique slugs and usernames, an accent colour kept in step with a document's picture
 
 The [package README](packages/payload/README.md#contents) lists each module; every export carries
 JSDoc, so an editor shows the detail on hover.
@@ -65,7 +67,8 @@ Contracts to know:
 - Everything under `db/` assumes a Postgres adapter built on `@payloadcms/drizzle` —
   `db-postgres` and `db-vercel-postgres` both qualify. Not SQLite or Mongo. Nothing outside `db/`
   imports drizzle. `fields/seo-tab` assumes `@payloadcms/plugin-seo`, and
-  `operations/after-response` assumes `next`.
+  `operations/after-response` assumes `next`, as does `operations/accent-colour-hook`, which defers
+  through it.
 - `role-gate`/`self-access` are generic over the role/id model - a project's own role list (which
   roles exist, which domain each covers) and multi-auth-collection id resolution stay local; only
   the read-a-role-off-a-caller and self-check MECHANISMS are here.
@@ -85,6 +88,14 @@ for the full table.
 - `twitch/` — channel, live-streams (Helix)
 - `ocr/` — scan (Claude vision image → structured data; the caller declares the shape)
 
+### `@quitecustard/react`
+
+React hooks for client components. Peer deps: `react`; `next` is optional (only the modules that
+say so need it).
+
+- `hooks/` — use-action-runner (run a Next.js server action with pending state, a surfaced refusal
+  and a route refresh)
+
 ## Development
 
 ```
@@ -100,7 +111,7 @@ they never ship.
 ## Consuming from another project
 
 ```
-pnpm add @quitecustard/core @quitecustard/payload @quitecustard/services
+pnpm add @quitecustard/core @quitecustard/payload @quitecustard/services @quitecustard/react
 ```
 
 Every subpath carries `import` and `default` conditions, so a script that still runs as CommonJS
@@ -111,16 +122,16 @@ Alternatives:
 
 - **Local link while iterating:** `pnpm link` from the package directory.
 - **Git dependency:** `pnpm add "github:QuiteCustard/custard-kit#path:packages/core"` works for
-  `core` only — `payload` and `services` depend on `@quitecustard/core` through `workspace:^`, which no
-  registry rewrites over a git dep, so the install fails to resolve it.
+  `core` and `react` only — `payload` and `services` depend on `@quitecustard/core` through
+  `workspace:^`, which no registry rewrites over a git dep, so the install fails to resolve it.
 
 ## Publishing
 
-The three packages publish to the `@quitecustard` npm scope, MIT, public.
+The four packages publish to the `@quitecustard` npm scope, MIT, public.
 
 ```
 pnpm -r build         # dist/ is gitignored and files: ["dist"] — build first
-pnpm -r publish       # topological: core, then payload and services
+pnpm -r publish       # topological: core, then payload and services; react depends on none
 ```
 
 - `pnpm` (not `npm`) is required: it rewrites the `workspace:^` dependency on `@quitecustard/core` to the

@@ -1,0 +1,63 @@
+{
+  "name": "@quitecustard/react",
+  "version": "0.1.0",
+  "description": "React hooks for Next.js apps: run a server action with pending state, a surfaced refusal and a route refresh",
+  "keywords": [
+    "react",
+    "hooks",
+    "next",
+    "server-actions",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "QuiteCustard",
+  "homepage": "https://github.com/QuiteCustard/custard-kit/tree/HEAD/packages/react#readme",
+  "bugs": "https://github.com/QuiteCustard/custard-kit/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuiteCustard/custard-kit.git",
+    "directory": "packages/react"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "22.19.9",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "jsdom": "^26.1.0",
+    "next": "^16.4.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  // What ships. `tsconfig.json` beside this one is the editor/typecheck project; this one emits, so
+  // it drops what must not reach `dist` or the tarball:
+  //   - tests and fixtures
+  //   - `paths`, because tsc does NOT rewrite an alias on emit. Without this a `src` module could
+  //     import `@quitecustard/core/...`, typecheck happily, and emit a specifier bare Node cannot
+  //     resolve. Clearing the mapping turns that into a build error instead, so cross-package
+  //     imports go through node_modules exactly as a consumer's would.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "declaration": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {}
+  },
+  "exclude": ["src/**/*.test.ts", "src/**/*.fixture.ts"]
+}

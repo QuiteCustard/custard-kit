@@ -20,6 +20,8 @@ export default defineConfig({
         replacement: `${packageSrc('services')}/$1.ts`,
       },
       { find: /^@quitecustard\/services\/(.*)$/, replacement: `${packageSrc('services')}/$1.ts` },
+      { find: /^@quitecustard\/react\/(.*)\.js$/, replacement: `${packageSrc('react')}/$1.ts` },
+      { find: /^@quitecustard\/react\/(.*)$/, replacement: `${packageSrc('react')}/$1.ts` },
     ],
   },
   test: {

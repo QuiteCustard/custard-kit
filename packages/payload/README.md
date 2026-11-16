@@ -91,6 +91,9 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
 - `after-response` — defer non-critical work past the response, falling back to inline outside a request
 - `run-queued-jobs` — drains the Payload job queue, which nothing else does
 - `unique-slug`, `unique-username` — collision-free values, each candidate checked exactly
+- `accent-colour-hook` — `accentColourHook({field, source, extract})`: an afterChange hook that
+  keeps a colour field in step with the document's picture, deferred past the response. The decode
+  is the caller's `extract`.
 
 `src/internal/` holds implementation detail and is not importable: `"./internal/*": null` sits ahead
 of the wildcard in `exports`.
@@ -165,7 +168,8 @@ replacing it, so registering both on one table is safe.
   directly. What they can't run on is SQLite or Mongo: the raw SQL uses `pg_constraint`,
   `timestamptz` and data-modifying CTEs. No module outside `db/` imports drizzle at all, so the
   other five folders work on any adapter.
-- `fields/seo-tab` assumes `@payloadcms/plugin-seo`, and `operations/after-response` assumes `next`.
-  Those two are the only modules touching either peer.
+- `fields/seo-tab` assumes `@payloadcms/plugin-seo`, and `operations/after-response` assumes `next`,
+  as does `operations/accent-colour-hook`, which defers through it. Those are the only modules
+  touching either peer.
 
 MIT licensed. Source: [custard-kit](https://github.com/QuiteCustard/custard-kit).

@@ -1,0 +1,15 @@
+{
+  // The editor and typecheck project: everything under `src`, tests included, emitting nothing.
+  // `tsconfig.build.json` is what emits.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@quitecustard/core/*": ["../core/src/*"],
+      "@quitecustard/react/*": ["../react/src/*"]
+    }
+  },
+  "include": ["src"]
+}

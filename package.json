@@ -1,7 +1,7 @@
 {
   "name": "custard-kit",
   "version": "0.1.0",
-  "description": "Reusable TypeScript helpers published as @quitecustard/core, @quitecustard/payload and @quitecustard/services",
+  "description": "Reusable TypeScript helpers published as @quitecustard/core, @quitecustard/payload, @quitecustard/services and @quitecustard/react",
   "private": true,
   "license": "MIT",
   "author": "QuiteCustard",
