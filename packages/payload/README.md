@@ -59,6 +59,8 @@ objects in place, so two collections must not receive one.
 - `owner-field` — a relationship auto-stamped to the creating user, refused on update by field-level
   access rather than by `admin.readOnly`, which Payload never consults on a write
 - `seo-tab` — over `@payloadcms/plugin-seo`'s field factories
+- `link-url` — `validateLinkField`: the link protocol allowlist in the one-argument shape a
+  field's `validate` takes
 - `social-url` — `normaliseSocialUrl` (bare host → `https://…`) plus `validateSocialUrl`
 - `colour-picker-field`, `colour-options-field`, `phone-field`, `height-field`, `size-field`,
   `spacing-select-field`, `layout-fields`, `media-content-fields`

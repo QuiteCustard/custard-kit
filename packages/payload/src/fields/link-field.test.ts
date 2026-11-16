@@ -81,6 +81,20 @@ describe('linkField', () => {
     expect(isRecord(anchor?.admin) ? anchor.admin.components : null).toEqual({ Field: picker })
   })
 
+  it('puts the caller’s help text under the anchor picker', () => {
+    const field = linkField({
+      relationTo: ['pages'],
+      anchorComponent: '@/components/anchor-picker/AnchorPicker',
+      anchorDescription: 'Markers placed in this document.',
+    })
+
+    const anchor = fieldIn(field, 'anchor')
+
+    expect(isRecord(anchor?.admin) ? anchor.admin.description : null).toBe(
+      'Markers placed in this document.',
+    )
+  })
+
   it('has no anchor type or field without the component', () => {
     const field = linkField({ relationTo: ['pages'] })
 

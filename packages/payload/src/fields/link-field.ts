@@ -26,6 +26,7 @@ export const linkField = ({
   staticOptions,
   phoneComponent,
   anchorComponent,
+  anchorDescription,
   styleOptions,
   disableLabel = false,
   localizedLabel = false,
@@ -46,6 +47,8 @@ export const linkField = ({
    * disable it.
    */
   anchorComponent?: string
+  /** Help text under the anchor picker, e.g. where its markers come from. */
+  anchorDescription?: string
   /** Style select options (e.g. primary/secondary/outline). Omit to skip the style field. */
   styleOptions?: SelectOption[]
   /** Whether the field also carries a "Label" text input alongside the link type. */
@@ -156,6 +159,7 @@ export const linkField = ({
       type: 'text',
       required: true,
       admin: {
+        ...(anchorDescription ? { description: anchorDescription } : {}),
         condition: (_, siblingData) => siblingData?.type === 'anchor',
         components: { Field: anchorComponent },
       },
