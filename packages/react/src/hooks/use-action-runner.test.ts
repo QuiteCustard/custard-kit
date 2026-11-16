@@ -5,7 +5,7 @@ import { useActionRunner } from './use-action-runner.js'
 
 const refresh = vi.fn()
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
+vi.mock('next/navigation.js', () => ({ useRouter: () => ({ refresh }) }))
 
 const runAction = async <T>(
   hook: { current: ReturnType<typeof useActionRunner> },

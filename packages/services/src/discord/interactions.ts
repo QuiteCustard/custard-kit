@@ -5,6 +5,7 @@ import type {
   APIApplicationCommandInteractionDataOption,
   InteractionResponseType,
   InteractionType,
+  MessageFlags,
   RESTPatchAPIInteractionOriginalResponseJSONBody,
 } from 'discord-api-types/v10'
 import { discordApiBase } from './api.js'
@@ -39,14 +40,23 @@ export const interactionType = {
 /** Response types to answer with, each pinned to its `InteractionResponseType` member. */
 export const interactionResponseType = {
   pong: 1,
+  /** An immediate reply, for an answer that needs no work behind it. */
+  channelMessage: 4,
   /** "Bot is thinking..." - buys 15 minutes to edit the reply in, instead of the 3s ack deadline. */
   deferredChannelMessage: 5,
   autocompleteResult: 8,
 } as const satisfies {
   pong: InteractionResponseType.Pong
+  channelMessage: InteractionResponseType.ChannelMessageWithSource
   deferredChannelMessage: InteractionResponseType.DeferredChannelMessageWithSource
   autocompleteResult: InteractionResponseType.ApplicationCommandAutocompleteResult
 }
+
+/** Message flags for a reply's `data.flags`, each pinned to its `MessageFlags` member. */
+export const messageFlags = {
+  /** Shown to the invoking user only. */
+  ephemeral: 64,
+} as const satisfies { ephemeral: MessageFlags.Ephemeral }
 
 /** Discord's hard caps on an autocomplete response. Exceed any of them and the whole reply is rejected. */
 export const autocompleteLimits = { choices: 25, nameLength: 100, valueLength: 100 } as const
@@ -74,13 +84,17 @@ const commandOptions = (interaction: APIApplicationCommandInteraction) =>
 export const interactionUserId = (interaction: APIApplicationCommandInteraction): string | null =>
   interaction.member?.user.id ?? interaction.user?.id ?? null
 
-/** A string-valued command option (USER options arrive as the target's snowflake, which is a string). */
+/**
+ * A string-valued command option (USER options arrive as the target's snowflake, which is a
+ * string), or null when it is absent, not a string, or empty - one "no value" for a caller to
+ * handle rather than two.
+ */
 export const stringOption = (
   interaction: APIApplicationCommandInteraction,
   name: string,
 ): string | null => {
   const value = commandOptions(interaction).find((option) => option.name === name)?.value
-  return typeof value === 'string' ? value : null
+  return typeof value === 'string' && value ? value : null
 }
 
 /**

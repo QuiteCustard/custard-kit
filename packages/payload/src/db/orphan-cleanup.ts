@@ -8,12 +8,23 @@ import { resultRows } from './sql-result.js'
 // safe. Only the first column of a composite foreign key is read - Payload's generated schema emits
 // none, but a hand-written one might.
 
-type FkRef = { tbl: string; col: string }
+/** One foreign key pointing at a table: the referring table and its column. */
+export type FkRef = { tbl: string; col: string }
 
-const fkTablesReferencing = async (
+/**
+ * Every foreign key that references `target`, read from `pg_constraint` at call time - what a
+ * purge has to clear or check before a row of `target` can go.
+ *
+ * ```ts
+ * const refs = await fkTablesReferencing(payload, 'media')
+ * ```
+ *
+ * Only the first column of a composite foreign key is reported.
+ */
+export const fkTablesReferencing = async (
   payload: BasePayload,
   target: string,
-  schema: string,
+  schema = 'public',
 ): Promise<FkRef[]> => {
   const res = await payload.db.drizzle.execute(sql`
     SELECT t.relname AS tbl, a.attname AS col

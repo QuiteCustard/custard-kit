@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { runAfterResponse } from './after-response.js'
 import { payloadFixture } from '@quitecustard/payload/payload.fixture.js'
 
-const { after } = await import('next/server')
+const { after } = await import('next/server.js')
 
-vi.mock('next/server', () => ({ after: vi.fn() }))
+vi.mock('next/server.js', () => ({ after: vi.fn() }))
 
 /** Outside a request scope - scripts, seeding - Next's `after` throws rather than deferring. */
 const outsideRequestScope = () => {

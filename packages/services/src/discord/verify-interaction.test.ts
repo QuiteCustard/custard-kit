@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateKeyPairSync, sign } from 'node:crypto'
 import { verifyInteractionSignature } from './verify-interaction.js'
 
@@ -20,6 +20,17 @@ const verify = (over: { body?: string; sig?: string; ts?: string; key?: string }
   verifyInteractionSignature(over.body ?? rawBody, over.sig ?? signature, over.ts ?? timestamp, {
     publicKey: over.key ?? publicKeyHex,
   })
+
+// The verifier refuses a stale timestamp, so the clock is pinned to the moment the fixtures were
+// signed for.
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(Number(timestamp) * 1000)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('verifyInteractionSignature', () => {
   it('accepts a genuine signature', () => {
@@ -119,5 +130,38 @@ describe('verifyInteractionSignature', () => {
   it('handles an empty body, which a malformed request can send', () => {
     expect(verify({ body: '', sig: signBody(timestamp, '') })).toBe(true)
     expect(verify({ body: '' })).toBe(false)
+  })
+
+  // The trap: the signature covers the timestamp, so a captured request verifies forever unless
+  // its age is checked too.
+  it('refuses a genuine signature once it is older than the window', () => {
+    vi.setSystemTime((Number(timestamp) + 300) * 1000)
+    expect(verify()).toBe(true)
+
+    vi.setSystemTime((Number(timestamp) + 301) * 1000)
+    expect(verify()).toBe(false)
+  })
+
+  it('refuses a timestamp from too far in the future', () => {
+    vi.setSystemTime((Number(timestamp) - 301) * 1000)
+    expect(verify()).toBe(false)
+  })
+
+  it('takes the window as an option', () => {
+    vi.setSystemTime((Number(timestamp) + 60) * 1000)
+
+    expect(
+      verifyInteractionSignature(rawBody, signature, timestamp, {
+        publicKey: publicKeyHex,
+        maxAgeSeconds: 30,
+      }),
+    ).toBe(false)
+  })
+
+  // Number() reads '1e9', ' 12 ' and '-5' as numbers; none of them is a Unix timestamp Discord sent.
+  it('refuses a timestamp that is not plain digits', () => {
+    for (const ts of ['', 'abc', '1e9', ' 1755777600', '-1755777600', '1755777600.5']) {
+      expect(verify({ ts, sig: signBody(ts, rawBody) })).toBe(false)
+    }
   })
 })

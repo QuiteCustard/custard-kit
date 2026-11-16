@@ -131,6 +131,18 @@ describe('verifyAssertion', () => {
     await expect(verifyAssertion(params)).resolves.toBe(false)
   })
 
+  // The trap: `get` reads the FIRST value of a repeated name while the echo to Steam carries every
+  // value, so a duplicate lets the value that was checked differ from the one Steam verified.
+  it('refuses a repeated parameter without asking Steam', async () => {
+    const { calls } = stubFetch([valid])
+    const params = assertion()
+
+    params.append('openid.claimed_id', 'https://steamcommunity.com/openid/id/76561198000000001')
+
+    await expect(verifyAssertion(params)).resolves.toBe(false)
+    expect(calls()).toBe(0)
+  })
+
   // Steam signs return_to but has no idea WHICH relying party is entitled to the assertion, so one
   // minted for a different site's callback verifies here just as happily without this check.
   it('refuses an assertion minted for a different relying party', async () => {

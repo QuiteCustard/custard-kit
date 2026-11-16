@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { InteractionResponseType, InteractionType } from 'discord-api-types/v10'
+import { InteractionResponseType, InteractionType, MessageFlags } from 'discord-api-types/v10'
 import type {
   APIApplicationCommandAutocompleteInteraction,
   APIApplicationCommandInteraction,
@@ -11,6 +11,7 @@ import {
   interactionResponseType,
   interactionType,
   interactionUserId,
+  messageFlags,
   stringOption,
 } from './interactions.js'
 import { captureConsole, stubFetch } from '@quitecustard/services/http.fixture.js'
@@ -52,6 +53,10 @@ describe('wire constants', () => {
 
   it('matches Discord’s response types', () => {
     expect(interactionResponseType.pong).toBe(InteractionResponseType.Pong)
+    expect(interactionResponseType.channelMessage).toBe(
+      InteractionResponseType.ChannelMessageWithSource,
+    )
+    expect(messageFlags.ephemeral).toBe(MessageFlags.Ephemeral)
     expect(interactionResponseType.deferredChannelMessage).toBe(
       InteractionResponseType.DeferredChannelMessageWithSource,
     )
@@ -110,6 +115,12 @@ describe('stringOption', () => {
     expect(stringOption(interaction, 'count')).toBeNull()
     expect(stringOption(interaction, 'absent')).toBeNull()
     expect(stringOption(chatInput({}), 'tag')).toBeNull()
+  })
+
+  it('reads an empty string as no value', () => {
+    const interaction = chatInput({ options: [{ name: 'tag', type: 3, value: '' }] })
+
+    expect(stringOption(interaction, 'tag')).toBeNull()
   })
 
   // Subcommand options NEST further options instead of carrying a value, so reading `.value` off

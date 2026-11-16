@@ -48,6 +48,7 @@ reads only its own, and at call time rather than import time:
 | `DISCORD_CLIENT_SECRET`                                  | `discord/oauth` (code exchange)                                    |
 | `DISCORD_APP_PUBLIC_KEY`                                 | `discord/verify-interaction`                                       |
 | `DISCORD_GUILD_IDS`                                      | `discord/oauth` — comma-separated, for multi-guild username sweeps |
+| `DISCORD_DELIVERY`                                       | `discord/oauth` — `postBotApi` refuses to send unless it is `true` |
 | `STARTGG_TOKEN`                                          | `startgg/fetch-start-gg-graphql` (personal access token)           |
 | `STARTGG_OAUTH_CLIENT_ID`, `STARTGG_OAUTH_CLIENT_SECRET` | `startgg/oauth`                                                    |
 | `STEAM_WEB_API_KEY`                                      | `steam/api`                                                        |
@@ -64,8 +65,9 @@ slot. A missing key is never cached at all.
 
 ## Contents
 
-- `discord/` — api, interactions (defer + edit-reply), verify-interaction (Ed25519), oauth,
-  webhook-url. Serverless-shaped; no gateway connection.
+- `discord/` — api, interactions (defer + edit-reply), verify-interaction (Ed25519, with a
+  300-second replay window), oauth, webhook-url, invite-url. Serverless-shaped; no gateway
+  connection.
 - `steam/` — id (SteamID64), api, openid ("Sign in through Steam"). Pass `verifyAssertion` the
   `expectedReturnTo` you gave `buildAuthUrl`: Steam signs `return_to` but has no idea which relying
   party is entitled to the assertion, so one minted for a different site's callback verifies here

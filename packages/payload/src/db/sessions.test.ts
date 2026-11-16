@@ -89,4 +89,12 @@ describe('appendUserSession', () => {
     expect(root.calls()).toBe(1)
     expect(session.calls()).toBe(0)
   })
+
+  // The trap: falling back to the root handle here would autocommit the INSERT on another
+  // connection, outside the caller's transaction and whatever row lock it is holding.
+  it('throws when the request names a transaction with no live session', async () => {
+    await expect(run({ req: requestFixture({ transactionID: 99 }) })).rejects.toThrow(
+      /requires an active transaction/,
+    )
+  })
 })

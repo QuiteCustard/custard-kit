@@ -2,10 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ImageRejectedError, numericCell, scanImage } from './scan.js'
 
 const create = vi.fn()
+const constructed = vi.fn()
 
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = { create }
+
+    constructor(options: unknown) {
+      constructed(options)
+    }
   },
 }))
 
@@ -29,6 +34,7 @@ const scan = <T>(over: Partial<Parameters<typeof scanImage<T>>[0]> = {}) =>
 
 afterEach(() => {
   create.mockReset()
+  constructed.mockReset()
 })
 
 describe('numericCell', () => {
@@ -116,6 +122,23 @@ describe('scanImage', () => {
     expect(create.mock.calls[0][0].messages[0].content[1].text).toContain(
       'Totals are printed bottom-right.',
     )
+  })
+
+  // Unset options are left OUT of the client config rather than passed as undefined, so the SDK's
+  // own defaults apply.
+  it('leaves the client timeout and retries to the SDK unless given', async () => {
+    create.mockResolvedValue(reply('{"valid":true,"data":{"merchant":"x"}}'))
+
+    await scan()
+    expect(constructed.mock.calls[0][0]).toEqual({ apiKey: 'key-1' })
+
+    constructed.mockClear()
+    await scan({ timeoutMs: 60_000, maxRetries: 0 })
+    expect(constructed.mock.calls[0][0]).toEqual({
+      apiKey: 'key-1',
+      timeout: 60_000,
+      maxRetries: 0,
+    })
   })
 
   it('defaults the model and token budget, and takes overrides', async () => {

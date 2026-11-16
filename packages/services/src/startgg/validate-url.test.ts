@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateStartggTournamentUrl, validateStartggUrl } from './validate-url.js'
+import { isStartggUrl, validateStartggTournamentUrl, validateStartggUrl } from './validate-url.js'
 
 describe('validateStartggUrl', () => {
   it('parses an event URL into its two slugs', () => {
@@ -119,5 +119,21 @@ describe('validateStartggTournamentUrl', () => {
     expect(validateStartggTournamentUrl('https://start.gg/tournament/a b')).toBe(
       'Invalid Start.gg URL: slug contains invalid characters',
     )
+  })
+})
+
+describe('isStartggUrl', () => {
+  it('recognises a start.gg URL of any shape', () => {
+    expect(isStartggUrl('https://start.gg/tournament/abc')).toBe(true)
+    expect(isStartggUrl('https://www.start.gg/user/abc')).toBe(true)
+    expect(isStartggUrl('HTTP://START.GG/')).toBe(true)
+  })
+
+  it('is false for another site, a lookalike host, or a bare host', () => {
+    expect(isStartggUrl('https://example.test/start.gg/')).toBe(false)
+    expect(isStartggUrl('https://start.gg.example.test/')).toBe(false)
+    expect(isStartggUrl('https://notstart.gg/')).toBe(false)
+    expect(isStartggUrl('start.gg/tournament/abc')).toBe(false)
+    expect(isStartggUrl('')).toBe(false)
   })
 })

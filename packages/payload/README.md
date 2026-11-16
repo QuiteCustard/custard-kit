@@ -28,8 +28,9 @@ shows on hover — this page is the map, not the reference.
 
 ### `documents/` — reading what Payload hands back
 
-- `resolve-ref` — `relId` / `relDoc` / `relDocs` / `relIds` / `relName` / `resolveMedia`: relation
-  narrowing without casts, tolerant of populate depth and of numeric or uuid ids
+- `resolve-ref` — `relId` / `relDoc` / `relDocs` / `firstRelDoc` / `relIds` / `relName` /
+  `resolveMedia`: relation narrowing without casts, tolerant of populate depth. Ids are typed as
+  Payload's `DefaultDocumentIDType`, so they are `number` or `string` to match your generated types
 - `locale-record` — flattens a `locale: 'all'` read into `Partial<Record<Locale, string>>`
 - `published-where` — the published clause, stated once so a bypassing read and the access rule
   cannot drift apart
@@ -53,7 +54,7 @@ parameter — pass your own. Each is a factory, never a shared constant: `buildC
 objects in place, so two collections must not receive one.
 
 - `link-field` — polymorphic link (internal reference, custom URL, optional static route, dropdown,
-  phone, email); each type appears only if its collection or component was supplied
+  in-page anchor, phone, email); each type appears only if its collection or component was supplied
 - `hero-field` — the image/video/poster banner group, parameterised on the two upload collections
 - `owner-field` — a relationship auto-stamped to the creating user, refused on update by field-level
   access rather than by `admin.readOnly`, which Payload never consults on a write
@@ -71,7 +72,8 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
 - `sessions` — `appendUserSession`: a race-safe INSERT onto an auth collection's session array
 - `sync-lock` — `createSyncLock({slug, table, staleMs})`: single-flight locking for a long job, as a
   conditional UPDATE rather than a read-then-write
-- `orphan-cleanup` — `findDeletableIds`, with guard rails that refuse rather than return everything
+- `orphan-cleanup` — `findDeletableIds`, with guard rails that refuse rather than return everything,
+  and `fkTablesReferencing`, the foreign-key reflection it is built on
 - `delete-many-with-versions` — bulk delete that also purges the version snapshots the FK leaves behind
 - `sql-result` — `resultRows` / `rowCount` across driver response shapes
 - `external-ref` — provenance fields plus the partial-unique index that lets an importer upsert on
@@ -86,11 +88,14 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
 
 ### `operations/` — write-path and job helpers
 
-- `publish-transition` — autosave-vs-unpublish disambiguation, cheap and exact variants
+- `publish-transition` — autosave-vs-unpublish disambiguation, cheap and exact variants. The exact
+  one reads the published row and never trusts the request's query flags
 - `suppress-context` — ref-counted `req.context` flags, safe under a bulk operation's shared context
 - `after-response` — defer non-critical work past the response, falling back to inline outside a request
 - `run-queued-jobs` — drains the Payload job queue, which nothing else does
-- `unique-slug`, `unique-username` — collision-free values, each candidate checked exactly
+- `unique-slug`, `unique-username` — collision-free values, each candidate checked exactly.
+  `resolveUniqueUsername` takes an `isTaken` hook for a name that is unavailable for a reason the
+  collection cannot see
 - `accent-colour-hook` — `accentColourHook({field, source, extract})`: an afterChange hook that
   keeps a colour field in step with the document's picture, deferred past the response. The decode
   is the caller's `extract`.

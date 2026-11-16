@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { relDoc, relDocs, relId, relIds, relName, resolveMedia } from './resolve-ref.js'
+import {
+  firstRelDoc,
+  relDoc,
+  relDocs,
+  relId,
+  relIds,
+  relName,
+  resolveMedia,
+} from './resolve-ref.js'
 
 const doc = { id: 7, name: 'Example' }
 
@@ -44,6 +52,18 @@ describe('relDocs', () => {
   it('is empty rather than undefined for a missing list', () => {
     expect(relDocs(null)).toEqual([])
     expect(relDocs(undefined)).toEqual([])
+  })
+})
+
+describe('firstRelDoc', () => {
+  it('is the first populated doc, skipping rows still held as ids', () => {
+    expect(firstRelDoc([3, doc, { id: 9, name: 'Later' }])).toBe(doc)
+  })
+
+  it('is null when nothing is populated', () => {
+    expect(firstRelDoc([1, 2])).toBeNull()
+    expect(firstRelDoc([])).toBeNull()
+    expect(firstRelDoc(null)).toBeNull()
   })
 })
 

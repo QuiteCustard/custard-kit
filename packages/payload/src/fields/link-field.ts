@@ -13,8 +13,8 @@ const withRowWidth = (field: Field): Field =>
 
 /**
  * A polymorphic link field: internal reference, custom URL, and optionally a static route, a
- * dropdown-menu reference, and phone/email - each type only appears if its collection/component is
- * given, so an unwanted type is simply omitted rather than toggled off.
+ * dropdown-menu reference, an in-page anchor, and phone/email - each type only appears if its
+ * collection/component is given, so an unwanted type is simply omitted rather than toggled off.
  *
  * ```ts
  * linkField({ relationTo: ['pages', 'posts'], styleOptions: [{ label: 'Primary', value: 'primary' }] })
@@ -25,6 +25,7 @@ export const linkField = ({
   dropdown,
   staticOptions,
   phoneComponent,
+  anchorComponent,
   styleOptions,
   disableLabel = false,
   localizedLabel = false,
@@ -39,6 +40,12 @@ export const linkField = ({
   staticOptions?: Option[]
   /** Admin component path for the "phone" type (see `phoneField`). Omit to disable phone/email. */
   phoneComponent?: string
+  /**
+   * Admin component path for an "anchor" type: a link to a named marker on the same document. The
+   * value is stored as text; the component is the picker that lists the markers there are. Omit to
+   * disable it.
+   */
+  anchorComponent?: string
   /** Style select options (e.g. primary/secondary/outline). Omit to skip the style field. */
   styleOptions?: SelectOption[]
   /** Whether the field also carries a "Label" text input alongside the link type. */
@@ -55,6 +62,7 @@ export const linkField = ({
 
   if (staticOptions) typeOptions.push({ label: 'Static link', value: 'static' })
   if (dropdown) typeOptions.push({ label: 'Dropdown', value: 'dropdown' })
+  if (anchorComponent) typeOptions.push({ label: 'Anchor', value: 'anchor' })
 
   if (phoneComponent)
     typeOptions.push({ label: 'Phone', value: 'phone' }, { label: 'Email', value: 'email' })
@@ -137,6 +145,19 @@ export const linkField = ({
       required: true,
       admin: {
         condition: (_, siblingData) => siblingData?.type === 'static',
+      },
+    })
+  }
+
+  if (anchorComponent) {
+    linkTypes.push({
+      name: 'anchor',
+      label: 'Marker',
+      type: 'text',
+      required: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.type === 'anchor',
+        components: { Field: anchorComponent },
       },
     })
   }

@@ -108,4 +108,26 @@ describe('resolveUniqueUsername', () => {
     await expect(resolveUniqueUsername('!!!', payload)).rejects.toThrow()
     expect(asked).toHaveLength(0)
   })
+
+  it('skips a candidate the extra check reports taken', async () => {
+    const { payload } = takenPayload()
+
+    await expect(
+      resolveUniqueUsername('ada', payload, {
+        isTaken: (candidate) => Promise.resolve(candidate === 'ada' || candidate === 'ada1'),
+      }),
+    ).resolves.toBe('ada2')
+  })
+
+  // Either reason is enough on its own: a name free in the collection but held elsewhere is taken,
+  // and so is one the extra check passes but a row already holds.
+  it('needs both the collection and the extra check to pass', async () => {
+    const { payload } = takenPayload('ada1')
+
+    await expect(
+      resolveUniqueUsername('ada', payload, {
+        isTaken: (candidate) => Promise.resolve(candidate === 'ada'),
+      }),
+    ).resolves.toBe('ada2')
+  })
 })

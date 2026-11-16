@@ -6,7 +6,10 @@ import {
   type RichTextField,
 } from 'payload'
 
-const buildContentFields = (editor: RichTextField['editor']): Field[] => [
+const buildContentFields = (
+  editor: RichTextField['editor'],
+  localizedWysiwyg: boolean,
+): Field[] => [
   {
     name: 'hasWysiwyg',
     type: 'checkbox',
@@ -27,6 +30,7 @@ const buildContentFields = (editor: RichTextField['editor']): Field[] => [
     type: 'richText',
     editor,
     label: false,
+    ...(localizedWysiwyg ? { localized: true } : {}),
     admin: {
       condition: (_, { hasWysiwyg } = {}) => hasWysiwyg,
     },
@@ -104,13 +108,20 @@ export const mediaContentFields = ({
   imageCollection,
   videoCollection,
   disableMedia = false,
+  localizedWysiwyg = false,
 }: {
   editor: RichTextField['editor']
   imageCollection: CollectionSlug
   videoCollection: CollectionSlug
   disableMedia?: boolean
+  /**
+   * Localise the rich-text body. Only where the fields sit OUTSIDE an already-localised parent: a
+   * field inside a localised blocks field rides that localisation, and Payload strips a nested
+   * `localized` there.
+   */
+  localizedWysiwyg?: boolean
 }): Field[] => [
-  ...buildContentFields(editor),
+  ...buildContentFields(editor, localizedWysiwyg),
   ...(disableMedia ? [] : buildMediaPickerFields(imageCollection, videoCollection)),
 ]
 
@@ -120,6 +131,7 @@ export const mediaContentGroupField = (options: {
   imageCollection: CollectionSlug
   videoCollection: CollectionSlug
   disableMedia?: boolean
+  localizedWysiwyg?: boolean
   overrides?: Partial<GroupField>
 }): GroupField => {
   const { overrides = {}, ...fieldOptions } = options

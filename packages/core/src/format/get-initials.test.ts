@@ -29,4 +29,18 @@ describe('getInitials', () => {
     expect(getInitials('Ада Лавлейс')).toBe('АЛ')
     expect(getInitials('ünïcode näme')).toBe('ÜN')
   })
+
+  // The trap: indexing a string reads UTF-16 units, so the first "character" of an astral one is
+  // half a surrogate pair. A server render serialises that half as U+FFFD and the client does not,
+  // which surfaces as a hydration mismatch.
+  it('keeps an astral leading character whole', () => {
+    const boldA = String.fromCodePoint(0x1d400)
+    const boldB = String.fromCodePoint(0x1d401)
+    const rocket = String.fromCodePoint(0x1f680)
+
+    expect(getInitials(`${boldA}da ${boldB}yron`)).toBe(`${boldA}${boldB}`)
+    expect(getInitials(`${rocket} crew`)).toBe(`${rocket}C`)
+    expect(getInitials(`${rocket} crew`, 1)).toBe(rocket)
+    expect(getInitials(`${boldA}da`).isWellFormed()).toBe(true)
+  })
 })

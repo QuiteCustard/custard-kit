@@ -1,4 +1,4 @@
-import { format, isBefore, isValid } from 'date-fns'
+import { format, isAfter, isBefore, isValid } from 'date-fns'
 import type { Locale as DateFnsLocale } from 'date-fns/locale'
 
 /** True for anything `new Date()` can parse. */
@@ -11,6 +11,13 @@ export const isValidDate = (value: string | null | undefined): boolean =>
  */
 export const dateRangeReversed = (start: string, end: string): boolean =>
   isBefore(new Date(end), new Date(start))
+
+/**
+ * True when the end instant is not strictly after the start - the stricter sibling of
+ * `dateRangeReversed`, for a window that must have length. Equal instants fail here.
+ */
+export const dateRangeNotAfter = (start: string, end: string): boolean =>
+  !isAfter(new Date(end), new Date(start))
 
 /**
  * The `<input type="datetime-local">` ↔ stored-ISO pair.

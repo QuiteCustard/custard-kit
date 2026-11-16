@@ -21,6 +21,10 @@ const flagged = (value: unknown) => value === true || value === 'true'
  * sets either flag - it seeds `req.query` from whatever it was handed and adds only `depth` - so
  * those flags, which are all this helper tests, are absent on a Local API call and a Local API
  * draft save always reads as a real transition here.
+ *
+ * The flags are a hint, not evidence, in the other direction too: `autosave=true` without
+ * `draft=true` can still perform a real unpublish. Use this only where a wrong answer costs a
+ * redundant cache purge; {@link isDraftSaveNotUnpublish} is the exact check.
  */
 export const looksLikeAutosaveTick = (req: PayloadRequest, doc: StatusDoc): boolean => {
   if (doc._status === 'published') return false
@@ -61,8 +65,11 @@ export const isCurrentlyPublished = async (
  * `_versions` only and leaves the published row intact, while a real unpublish flips it. Costs one
  * indexed read, and only on the ambiguous (draft-direction) branch.
  *
- * Use this wherever the answer drives a STATE MUTATION or an outbound side effect. The cheap sync
- * check above is proportionate only where a false negative merely costs a redundant cache purge.
+ * The published row is the only evidence read. The request's query flags are never consulted:
+ * a Local API call carries none, and `autosave=true` without `draft=true` can be a real unpublish.
+ *
+ * Use this wherever the answer drives a STATE MUTATION, an outbound side effect or a public cache
+ * purge.
  */
 export const isDraftSaveNotUnpublish = async (
   collection: CollectionSlug,
@@ -71,7 +78,6 @@ export const isDraftSaveNotUnpublish = async (
 ): Promise<boolean> => {
   // Publishing is always a genuine transition; only the draft direction is ambiguous.
   if (doc._status === 'published') return false
-  if (looksLikeAutosaveTick(req, doc)) return true
 
   try {
     // Threading `req` keeps this on the operation's own transaction (a req-less nested call would
@@ -80,6 +86,10 @@ export const isDraftSaveNotUnpublish = async (
       collection,
       id: doc.id,
       depth: 0,
+      // Explicit, because a request that arrived with `?draft=true` would otherwise read the latest
+      // version - the very row this check must not be answered from.
+      draft: false,
+      select: { _status: true },
       req,
     })
 

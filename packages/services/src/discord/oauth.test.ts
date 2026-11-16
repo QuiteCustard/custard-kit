@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  discordDeliveryAllowed,
   discordGuildIds,
   exchangeCode,
   fetchDiscordUserByAccessToken,
@@ -337,7 +338,39 @@ describe('fetchDiscordUserByAccessToken', () => {
   })
 })
 
+describe('discordDeliveryAllowed', () => {
+  it('is on only for the exact value true', () => {
+    expect(discordDeliveryAllowed('true')).toBe(true)
+    expect(discordDeliveryAllowed('TRUE')).toBe(false)
+    expect(discordDeliveryAllowed('1')).toBe(false)
+    expect(discordDeliveryAllowed('')).toBe(false)
+    expect(discordDeliveryAllowed(undefined)).toBe(false)
+  })
+})
+
 describe('postBotApi', () => {
+  beforeEach(() => {
+    vi.stubEnv('DISCORD_DELIVERY', 'true')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  // The trap: a test run or a script holding a real bot token posts into a real channel. Nothing
+  // may leave unless the environment has said this process is the one that sends.
+  it('refuses to send, and makes no request, unless delivery is switched on', async () => {
+    vi.stubEnv('DISCORD_DELIVERY', '')
+
+    const { calls } = stubFetch([{ body: {} }])
+
+    await expect(
+      postBotApi('/channels/1/messages', { content: 'hi' }, 'sending a message', auth),
+    ).rejects.toThrow(/delivery is off/)
+
+    expect(calls()).toBe(0)
+  })
+
   it('posts JSON with the bot token', async () => {
     const { requests } = stubFetch([{ body: {} }])
 

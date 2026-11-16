@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { accentColourHook, type AccentColourSource } from './accent-colour-hook.js'
 import { payloadFixture, requestFixture } from '@quitecustard/payload/payload.fixture.js'
 
-const { after } = await import('next/server')
+const { after } = await import('next/server.js')
 
-vi.mock('next/server', () => ({ after: vi.fn() }))
+vi.mock('next/server.js', () => ({ after: vi.fn() }))
 
 /** Outside a request scope Next's `after` throws, so the deferred work is awaited inline. */
 const runsInline = () => {

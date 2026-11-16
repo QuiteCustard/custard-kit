@@ -22,7 +22,7 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
 - `utils/` — sleep, is-record, one-of, numbers, safe-equal, form-data, slug-to-label, rgb-to-hex, cn
 - `format/` — normalise (transliteration/slug/IGN pipeline), get-initials, ordinal, sanitise-text,
   profanity
-- `format/date` — isValidDate, dateRangeReversed, and the `<input type="datetime-local">` ↔ ISO
+- `format/date` — isValidDate, dateRangeReversed, dateRangeNotAfter, and the `<input type="datetime-local">` ↔ ISO
   pair (dateInputToIso / isoToDateInput), plus formatDate over date-fns
 - `format/amount` — `formatAmount(amount, symbol, intlLocale)`: locale-aware grouping with the
   caller's own currency symbol

@@ -109,6 +109,24 @@ describe('externalRefFields', () => {
   })
 })
 
+describe('externalRefFields access', () => {
+  it('carries no access rule unless one is given', () => {
+    for (const field of externalRefFields([{ label: 'Stripe', value: 'stripe' }])) {
+      expect(props(field).access).toBeUndefined()
+    }
+  })
+
+  // Both fields, not just the source: re-pointing either half of the pair re-points the upsert key.
+  it('puts the given access on both fields', () => {
+    const update = () => false
+    const fields = externalRefFields([{ label: 'Stripe', value: 'stripe' }], { access: { update } })
+
+    for (const field of fields) {
+      expect(props(field).access).toEqual({ update })
+    }
+  })
+})
+
 describe('externalRefIndex', () => {
   const indexes = indexesFrom(externalRefIndex({ table: 'products', prefix: 'products' }))
 
@@ -139,6 +157,31 @@ describe('externalRefIndex', () => {
 
     expect(rendered).toContain('ext_src')
     expect(rendered).not.toContain('external_source')
+  })
+
+  // The trap: the predicate's text is stored verbatim in a migration snapshot. Interpolating the
+  // column object emits `"products"."external_source"`, which reads as a different index from one
+  // written `external_source` and gets it dropped and recreated.
+  it('renders the column bare, with no table qualifier or quoting', () => {
+    const hook = externalRefIndex({ table: 'products', prefix: 'products' })
+    const extraConfig = extraConfigFrom(hook, 'products', buildColumns())
+    const table = pgTable('products', buildColumns(), extraConfig)
+    const { where } = getTableConfig(table).indexes[0]?.config ?? {}
+
+    if (!where) throw new Error('the index must carry a predicate')
+
+    expect(new PgDialect().sqlToQuery(where).sql).toBe('external_source IS NOT NULL')
+  })
+
+  it('quotes a column name that is not a plain identifier', () => {
+    const hook = externalRefIndex({ table: 'products', prefix: 'products' })
+    const extraConfig = extraConfigFrom(hook, 'products', buildColumns('Ext Source'))
+    const table = pgTable('products', buildColumns('Ext Source'), extraConfig)
+    const { where } = getTableConfig(table).indexes[0]?.config ?? {}
+
+    if (!where) throw new Error('the index must carry a predicate')
+
+    expect(new PgDialect().sqlToQuery(where).sql).toBe('"Ext Source" IS NOT NULL')
   })
 })
 

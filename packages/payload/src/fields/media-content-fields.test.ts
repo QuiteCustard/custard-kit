@@ -47,6 +47,17 @@ describe('mediaContentFields', () => {
     expect(named(fields, 'wysiwyg')?.editor).toBe(editor)
   })
 
+  // Unset by default: inside a localised parent Payload strips a nested `localized`, so the flag
+  // belongs only on the one host that sits outside one.
+  it('localises the rich-text body only when asked', () => {
+    expect(named(fields, 'wysiwyg')?.localized).toBeUndefined()
+
+    const localised = mediaContentFields({ ...options, localizedWysiwyg: true })
+
+    expect(named(localised, 'wysiwyg')?.localized).toBe(true)
+    expect(named(localised, 'hasWysiwyg')?.localized).toBeUndefined()
+  })
+
   it('drops the media picker entirely when asked', () => {
     const textOnly = mediaContentFields({ ...options, disableMedia: true })
 

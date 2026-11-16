@@ -99,3 +99,10 @@ export const validateStartggTournamentUrl = (url: string): { tournamentSlug: str
 
   return { tournamentSlug }
 }
+
+/**
+ * Whether a URL points at start.gg at all - for choosing a label ("View on start.gg" against a
+ * plain "Visit website"), not for trusting the link. It checks the host only; the protocol guard on
+ * whatever renders the href is a separate job.
+ */
+export const isStartggUrl = (raw: string): boolean => /^https?:\/\/(www\.)?start\.gg\//i.test(raw)

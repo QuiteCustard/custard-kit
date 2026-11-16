@@ -5,8 +5,23 @@ import type { Field, SelectField } from 'payload'
 // parent forbids it. One exported object reused across collections is therefore one object every
 // collection mutates.
 
-/** Left/center/right text alignment select, defaulting to left. */
-export const alignmentField = (): SelectField => ({
+/**
+ * Left/center/right text alignment select, defaulting to left.
+ *
+ * ```ts
+ * alignmentField({ options: [{ label: 'Left', value: 'left' }, { label: 'Center', value: 'center' }], defaultValue: 'center' })
+ * ```
+ *
+ * Narrow `options` where a layout cannot honour all three, and move `defaultValue` with it - both
+ * are part of the stored enum, so they are the caller's to fix rather than this factory's.
+ */
+export const alignmentField = (
+  overrides: {
+    defaultValue?: string
+    options?: { label: string; value: string }[]
+    admin?: SelectField['admin']
+  } = {},
+): SelectField => ({
   name: 'alignment',
   type: 'select',
   defaultValue: 'left',
@@ -16,6 +31,7 @@ export const alignmentField = (): SelectField => ({
     { label: 'Center', value: 'center' },
     { label: 'Right', value: 'right' },
   ],
+  ...overrides,
 })
 
 /** A plain "stretch to full width" toggle. */

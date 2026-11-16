@@ -146,15 +146,34 @@ const fetchBotApi = async (
 }
 
 /**
+ * Whether this process may deliver to Discord - the calls that reach people, as opposed to a read
+ * or a reply to a request Discord itself made. Off unless `DISCORD_DELIVERY` is `true`.
+ *
+ * Production sets it. A test run, a script, and a development session pointed at a copy of
+ * production data (which carries production's bot token and channel ids) do not, so nothing they
+ * run posts into a real channel.
+ */
+export const discordDeliveryAllowed = (flag = process.env.DISCORD_DELIVERY): boolean =>
+  flag === 'true'
+
+/**
  * A bot-token POST with the same 429/timeout discipline as the GET path - for the routes this
  * module doesn't wrap, such as opening a DM channel and posting to it.
+ *
+ * Throws without sending unless {@link discordDeliveryAllowed}: set `DISCORD_DELIVERY=true` in the
+ * environment that is meant to post.
  */
-export const postBotApi = (
+export const postBotApi = async (
   path: string,
   body: Record<string, unknown>,
   what: string,
   auth: DiscordBotAuth = {},
-): Promise<Response> => fetchBotApi(path, what, auth, { method: 'POST', body })
+): Promise<Response> => {
+  if (!discordDeliveryAllowed())
+    throw new Error(`Discord delivery is off (DISCORD_DELIVERY is not true) - skipped ${what}`)
+
+  return fetchBotApi(path, what, auth, { method: 'POST', body })
+}
 
 /**
  * NOTE: /users/{id} has one of Discord's stingiest per-route buckets - for bulk lookups, resolve

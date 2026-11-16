@@ -85,22 +85,36 @@ describe('isDraftSaveNotUnpublish', () => {
     )
   })
 
-  // The cheap flag check short-circuits before the read, so an admin autosave costs no query.
-  it('answers from the flags without reading, when they are there', async () => {
-    let reads = 0
+  // The trap: `autosave=true` without `draft=true` can be a real unpublish, so the flags must not
+  // answer for the row. A flagged request whose published row has flipped is an unpublish.
+  it('reads the row even when the autosave flags are set', async () => {
+    await expect(
+      isDraftSaveNotUnpublish('pages', draft, reqWith(draft, { autosave: 'true' })),
+    ).resolves.toBe(false)
+
+    await expect(
+      isDraftSaveNotUnpublish('pages', draft, reqWith(published, { autosave: 'true' })),
+    ).resolves.toBe(true)
+  })
+
+  // A request that arrived with `?draft=true` reads the latest VERSION unless told otherwise, and
+  // the latest version is the draft this write just made.
+  it('asks for the published row, not the draft-latest one', async () => {
+    let asked: unknown
 
     const req = requestFixture({
-      query: { autosave: 'true' },
+      query: { draft: 'true' },
       payload: payloadFixture({
-        findByID: () => {
-          reads++
+        findByID: (args: unknown) => {
+          asked = args
           return Promise.resolve(published)
         },
       }),
     })
 
-    await expect(isDraftSaveNotUnpublish('pages', draft, req)).resolves.toBe(true)
-    expect(reads).toBe(0)
+    await isDraftSaveNotUnpublish('pages', draft, req)
+
+    expect(asked).toMatchObject({ draft: false, select: { _status: true } })
   })
 
   // The exact answer: a draft save leaves the PUBLISHED row intact, so finding it still published

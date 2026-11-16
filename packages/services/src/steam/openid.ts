@@ -62,6 +62,11 @@ export const verifyAssertion = async (
   params: URLSearchParams,
   { expectedReturnTo }: { expectedReturnTo?: string } = {},
 ): Promise<boolean> => {
+  // OpenID 2.0 §4.1 forbids a repeated parameter name. `get` reads the first value while the
+  // echo to Steam carries every value, so a duplicate lets the checked value and the verified one
+  // differ.
+  if (new Set(params.keys()).size !== [...params.keys()].length) return false
+
   // Structural checks before the round-trip: the assertion must be a positive response naming
   // Steam's own endpoint, and every field acted on must be covered by the signature.
   if (params.get('openid.mode') !== 'id_res') return false

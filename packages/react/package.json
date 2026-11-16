@@ -1,6 +1,6 @@
 {
   "name": "@quitecustard/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React hooks for Next.js apps: run a server action with pending state, a surfaced refusal and a route refresh",
   "keywords": [
     "react",

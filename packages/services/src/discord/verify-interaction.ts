@@ -16,6 +16,10 @@ import { createPublicKey, verify, type KeyObject } from 'node:crypto'
 const ed25519SpkiPrefix = Buffer.from('302a300506032b6570032100', 'hex')
 const hexRe = /^[0-9a-f]+$/i
 
+// Unix seconds as Discord sends them: digits only, so `Number` cannot read a sign, an exponent or
+// whitespace into a value that passes the age check.
+const timestampRe = /^\d{1,12}$/
+
 // Keyed by the raw hex so two apps' keys can't share a slot, and cached because a key is fixed for
 // the life of an app. `null` records a MALFORMED key, so it fails closed without being re-parsed on
 // every request. A missing key returns before this map is touched - there is no string to key a
@@ -49,13 +53,23 @@ const getPublicKey = (raw: string | undefined): KeyObject | null => {
  *
  * `publicKey` is the app's hex Ed25519 key from the Developer Portal, falling back to
  * `DISCORD_APP_PUBLIC_KEY`. A missing or malformed key fails every request closed.
+ *
+ * A request whose timestamp is more than `maxAgeSeconds` (300 by default) from this machine's
+ * clock is refused before the signature is looked at. The signature covers the timestamp, so
+ * without the window a captured request stays valid forever.
  */
 export const verifyInteractionSignature = (
   rawBody: string,
   signature: string,
   timestamp: string,
-  { publicKey = process.env.DISCORD_APP_PUBLIC_KEY }: { publicKey?: string } = {},
+  {
+    publicKey = process.env.DISCORD_APP_PUBLIC_KEY,
+    maxAgeSeconds = 300,
+  }: { publicKey?: string; maxAgeSeconds?: number } = {},
 ): boolean => {
+  if (!timestampRe.test(timestamp)) return false
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > maxAgeSeconds) return false
+
   const key = getPublicKey(publicKey)
 
   // The length/charset check is load-bearing, not belt-and-braces: Buffer.from(x, 'hex') silently

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findDeletableIds } from './orphan-cleanup.js'
+import { findDeletableIds, fkTablesReferencing } from './orphan-cleanup.js'
 import { fakeDrizzle, payloadFixture } from '@quitecustard/payload/payload.fixture.js'
 
 /**
@@ -80,5 +80,37 @@ describe('findDeletableIds', () => {
 
     expect(statements.join(' ')).toContain('tenant_a')
     expect(statements.join(' ')).toContain('authors')
+  })
+})
+
+describe('fkTablesReferencing', () => {
+  it('lists each referring table and column', async () => {
+    const { payload } = fakePayload([refs('posts', 'comments')])
+
+    await expect(fkTablesReferencing(payload, 'authors')).resolves.toEqual([
+      { tbl: 'posts', col: 'parent_id' },
+      { tbl: 'comments', col: 'parent_id' },
+    ])
+  })
+
+  it('drops rows that are not a table/column pair', async () => {
+    const { payload } = fakePayload([
+      { rows: [{ tbl: 'posts', col: 'author_id' }, { tbl: 5 }, null] },
+    ])
+
+    await expect(fkTablesReferencing(payload, 'authors')).resolves.toEqual([
+      { tbl: 'posts', col: 'author_id' },
+    ])
+  })
+
+  it('looks in the public schema unless told otherwise', async () => {
+    const inPublic = fakePayload([refs()])
+    const inTenant = fakePayload([refs()])
+
+    await fkTablesReferencing(inPublic.payload, 'authors')
+    await fkTablesReferencing(inTenant.payload, 'authors', 'tenant_a')
+
+    expect(inPublic.statements.join(' ')).toContain('public')
+    expect(inTenant.statements.join(' ')).toContain('tenant_a')
   })
 })

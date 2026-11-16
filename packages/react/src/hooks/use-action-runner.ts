@@ -1,6 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation.js'
 
 // Narrowed from `unknown` rather than constrained on the generic: actions return unions like
 // `{ error } | { id }`, and a result arm carrying no `error` key at all still has to pass through.

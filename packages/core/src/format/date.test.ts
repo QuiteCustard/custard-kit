@@ -3,6 +3,7 @@ import { UTCDate } from '@date-fns/utc'
 import { enGB } from 'date-fns/locale'
 import {
   dateInputToIso,
+  dateRangeNotAfter,
   dateRangeReversed,
   formatDate,
   isValidDate,
@@ -43,6 +44,19 @@ describe('dateRangeReversed', () => {
 
   it('compares instants, not strings', () => {
     expect(dateRangeReversed('2026-08-21T10:00:00.000Z', '2026-08-21T09:59:59.999Z')).toBe(true)
+  })
+})
+
+describe('dateRangeNotAfter', () => {
+  it('passes only an end strictly after its start', () => {
+    expect(dateRangeNotAfter('2026-08-21', '2026-08-22')).toBe(false)
+    expect(dateRangeNotAfter('2026-08-21', '2026-08-20')).toBe(true)
+  })
+
+  // Where dateRangeReversed allows a zero-length window, this one refuses it.
+  it('refuses equal instants', () => {
+    expect(dateRangeNotAfter('2026-08-21', '2026-08-21')).toBe(true)
+    expect(dateRangeNotAfter('2026-08-21T10:00:00.000Z', '2026-08-21T10:00:00.000Z')).toBe(true)
   })
 })
 

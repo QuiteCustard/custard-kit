@@ -1,6 +1,7 @@
-import type { Field } from 'payload'
+import type { Field, FieldAccess } from 'payload'
 import type { PostgresSchemaHook } from '@payloadcms/drizzle/postgres'
 import { sql } from 'drizzle-orm'
+import { isRecord } from '@quitecustard/core/utils/is-record'
 import { uniqueIndex } from 'drizzle-orm/pg-core'
 
 // Import provenance: the fields an importer stamps on a doc, and the indexes its upsert leans on.
@@ -22,12 +23,20 @@ import { uniqueIndex } from 'drizzle-orm/pg-core'
  * Pair them with `externalRefIndex`, which is what makes the upsert safe under concurrency. Writing
  * the fields is the importer's job: attaching a source id to a doc that was made by hand is a
  * repair, and belongs in a script rather than the admin form.
+ *
+ * `access` is field-level access for both fields. Set `update` wherever the collection lets a
+ * non-staff owner edit the doc: re-pointing provenance would hand them a synced doc, or break the
+ * importer's upsert key.
  */
-export const externalRefFields = (sources: { label: string; value: string }[]): Field[] => [
+export const externalRefFields = (
+  sources: { label: string; value: string }[],
+  { access }: { access?: { create?: FieldAccess; read?: FieldAccess; update?: FieldAccess } } = {},
+): Field[] => [
   {
     name: 'externalSource',
     type: 'select',
     options: sources,
+    ...(access ? { access } : {}),
     admin: {
       position: 'sidebar',
       description: 'Source platform this doc was imported from.',
@@ -38,6 +47,7 @@ export const externalRefFields = (sources: { label: string; value: string }[]): 
     name: 'externalRef',
     label: 'External Ref',
     type: 'text',
+    ...(access ? { access } : {}),
     admin: {
       position: 'sidebar',
       description: "The source platform's own id for this doc, stored verbatim.",
@@ -57,6 +67,23 @@ const extendWith = (table: string, extraConfig: ExtraConfig): AfterSchemaInitHoo
     extendTable({ table: schema.tables[table], extraConfig })
     return schema
   }
+}
+
+const plainIdentifier = /^[a-z_][a-z0-9_]*$/
+
+// The column's PHYSICAL name, read off the column rather than written out: a `dbName` on the field
+// changes it, and a literal `external_source` would then name a column that isn't there.
+//
+// Rendered bare, not by interpolating the column object. Interpolation emits `"table"."column"`,
+// and the predicate's text is stored verbatim in the migration snapshot - so the two spellings of
+// one index read as a schema change, and the index is dropped and recreated. A name that needs
+// quoting to be valid still gets it.
+const columnName = (column: unknown) => {
+  const name = isRecord(column) && typeof column.name === 'string' ? column.name : ''
+
+  if (!name) throw new Error('externalRefIndex: the table has no externalSource column')
+
+  return plainIdentifier.test(name) ? sql.raw(name) : sql.identifier(name)
 }
 
 /**
@@ -83,9 +110,7 @@ export const externalRefIndex = ({
   extendWith(table, (t) => ({
     externalRefUnique: uniqueIndex(`${prefix}_external_ref_uq`)
       .on(t.externalSource, t.externalRef)
-      // Interpolated rather than written out: a `dbName` on the field changes the physical column,
-      // and a literal `external_source` here would name a column that isn't there.
-      .where(sql`${t.externalSource} IS NOT NULL`),
+      .where(sql`${columnName(t.externalSource)} IS NOT NULL`),
   }))
 
 /**

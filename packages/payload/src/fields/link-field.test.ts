@@ -71,6 +71,23 @@ describe('linkField', () => {
     expect(fieldIn(withPhone, 'email')).not.toBeNull()
   })
 
+  it('adds the anchor type, rendered by the caller’s picker, when its component is supplied', () => {
+    const picker = '@/components/anchor-picker/AnchorPicker'
+    const field = linkField({ relationTo: ['pages'], anchorComponent: picker })
+    const anchor = fieldIn(field, 'anchor')
+
+    expect(optionValues(fieldIn(field, 'type'))).toContain('anchor')
+    expect(anchor?.type).toBe('text')
+    expect(isRecord(anchor?.admin) ? anchor.admin.components : null).toEqual({ Field: picker })
+  })
+
+  it('has no anchor type or field without the component', () => {
+    const field = linkField({ relationTo: ['pages'] })
+
+    expect(optionValues(fieldIn(field, 'type'))).not.toContain('anchor')
+    expect(fieldIn(field, 'anchor')).toBeNull()
+  })
+
   it('adds the static type when routes are supplied', () => {
     const withStatic = linkField({
       relationTo: ['pages'],

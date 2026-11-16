@@ -12,6 +12,12 @@ export type UniqueUsernameOptions = {
    * concurrently in one run; each candidate this resolves is added to the set.
    */
   reserved?: Set<string>
+  /**
+   * An extra reason a candidate is unavailable, asked alongside the collection lookup - a name
+   * that still redirects to its previous holder, one on a reserved-routes list. Return true to
+   * skip the candidate.
+   */
+  isTaken?: (candidate: string) => Promise<boolean>
 }
 
 /**
@@ -43,7 +49,7 @@ export type UniqueUsernameOptions = {
 export const resolveUniqueUsername = async (
   base: string,
   payload: BasePayload,
-  { collection = 'users', field = 'username', reserved }: UniqueUsernameOptions = {},
+  { collection = 'users', field = 'username', reserved, isTaken }: UniqueUsernameOptions = {},
 ): Promise<string> => {
   const normalised = normaliseUsernameSlug(base)
 
@@ -65,11 +71,11 @@ export const resolveUniqueUsername = async (
 
     if (!candidate) continue
 
-    const { totalDocs } = await payload.count({
-      collection,
-      where: { [field]: { equals: candidate } },
-    })
+    const [{ totalDocs }, takenElsewhere] = await Promise.all([
+      payload.count({ collection, where: { [field]: { equals: candidate } } }),
+      isTaken ? isTaken(candidate) : false,
+    ])
 
-    if (totalDocs === 0) return candidate
+    if (totalDocs === 0 && !takenElsewhere) return candidate
   }
 }

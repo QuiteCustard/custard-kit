@@ -28,6 +28,9 @@ import { transactionDb } from './transaction-db.js'
  *
  * Pass `req` wherever one exists: the statement then runs on the operation's own transaction
  * instead of the pooled root handle.
+ *
+ * Throws when `req` names a transaction that has no live session. Falling back to the root handle
+ * there would autocommit the INSERT outside the caller's transaction and whatever lock it holds.
  */
 export const appendUserSession = async ({
   payload,
@@ -50,7 +53,7 @@ export const appendUserSession = async ({
    * uncommitted parent row (foreign key violation) and can deadlock against locks the outer
    * transaction already holds.
    */
-  req?: PayloadRequest
+  req?: Partial<PayloadRequest>
   /** Physical table backing the auth collection's `sessions` array field. Defaults to Payload's
    * own naming for a `users` collection - `<collection>_sessions` for any other slug. */
   table?: string
@@ -63,6 +66,9 @@ export const appendUserSession = async ({
   // Awaited because Payload leaves `transactionID` as a promise while the transaction is still
   // being opened.
   const transactionID = await req?.transactionID
+
+  if (transactionID != null && !payload.db.sessions?.[transactionID])
+    throw new Error('Session insertion requires an active transaction')
 
   await transactionDb(payload, transactionID).execute(sql`
     WITH pruned AS (

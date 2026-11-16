@@ -1,4 +1,11 @@
+import type { DefaultDocumentIDType } from 'payload'
 import { isRecord } from '@quitecustard/core/utils/is-record'
+
+// Ids come back as `DefaultDocumentIDType`, which Payload resolves from the consuming project's
+// generated types: `number` on a serial-id database, `string` on a uuid one, and `number | string`
+// here, where no project has generated any. Parameters stay wide so a collection with a custom id
+// type still fits.
+
 /**
  * A relationship field as Payload hands it over: an id at depth 0, the doc once populated, or empty.
  */
@@ -7,9 +14,12 @@ export type Relation<T> = number | string | T | null | undefined
 /** The value at `key` on a maybe-populated ref, as unknown; undefined for ids and misses. */
 const refField = (rel: unknown, key: string): unknown => (isRecord(rel) ? rel[key] : undefined)
 
-/** Pluck the id from a relationship value: an id, a populated doc, or null/undefined. Works for
- *  both numeric (Postgres serial) and string (UUID) primary keys. */
-export const relId = (rel: unknown): number | string | null => {
+/**
+ * Pluck the id from a relationship value: an id, a populated doc, or null/undefined. Works for both
+ * numeric (Postgres serial) and string (UUID) primary keys, and is typed as whichever the project's
+ * generated types say its ids are.
+ */
+export const relId = (rel: unknown): DefaultDocumentIDType | null => {
   if (typeof rel === 'number' || typeof rel === 'string') return rel
 
   const id = refField(rel, 'id')
@@ -25,8 +35,13 @@ export const relDocs = <T extends { id: number | string }>(
   refs: readonly Relation<T>[] | null | undefined,
 ): T[] => (refs ?? []).flatMap((ref) => relDoc(ref) ?? [])
 
+/** The first populated doc in a hasMany or join relation, or null when none is populated. */
+export const firstRelDoc = <T extends { id: number | string }>(
+  refs: readonly Relation<T>[] | null | undefined,
+): T | null => relDocs(refs)[0] ?? null
+
 /** A list of relationship values as plain ids, tolerant of populate depth; misses drop out. */
-export const relIds = (refs: readonly unknown[] | null | undefined): (number | string)[] =>
+export const relIds = (refs: readonly unknown[] | null | undefined): DefaultDocumentIDType[] =>
   (refs ?? []).flatMap((ref) => {
     const id = relId(ref)
     return id != null ? [id] : []
@@ -44,7 +59,7 @@ export const relName = (rel: unknown): string | null => {
 }
 
 /** An upload relation as `{ id, url }`, or null when it is unpopulated or has no url yet. */
-export const resolveMedia = (val: unknown): { id: number | string; url: string } | null => {
+export const resolveMedia = (val: unknown): { id: DefaultDocumentIDType; url: string } | null => {
   const id = refField(val, 'id')
   const url = refField(val, 'url')
   return (typeof id === 'number' || typeof id === 'string') && typeof url === 'string' && url !== ''

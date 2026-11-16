@@ -82,7 +82,7 @@ Standalone API clients. Optional peer dep: `@anthropic-ai/sdk` (only `ocr/scan`)
 Every credential is a parameter falling back to an environment variable — see the package README
 for the full table.
 
-- `discord/` — api, interactions (defer + edit-reply), verify-interaction (Ed25519), oauth, webhook-url
+- `discord/` — api, interactions (defer + edit-reply), verify-interaction (Ed25519), oauth, webhook-url, invite-url
 - `steam/` — id (SteamID64), api, openid ("Sign in through Steam")
 - `startgg/` — oauth, fetch-start-gg-graphql (rate-limited client), validate-url
 - `twitch/` — channel, live-streams (Helix)

@@ -81,6 +81,8 @@ export const scanImage = async <T>({
   notes,
   model = 'claude-sonnet-4-6',
   maxTokens = 2048,
+  timeoutMs,
+  maxRetries,
 }: {
   apiKey: string
   imageBytes: Uint8Array
@@ -99,9 +101,21 @@ export const scanImage = async <T>({
   model?: string
   /** Headroom matters: a truncated reply parses as invalid JSON and loses the whole scan. */
   maxTokens?: number
+  /**
+   * Request timeout. The SDK's default is ten minutes; a scan run inside a serverless function
+   * wants one shorter than the function's own budget.
+   */
+  timeoutMs?: number
+  /** Retries on a failed request. The SDK's default is 2; 0 keeps a slow scan to one attempt. */
+  maxRetries?: number
 }): Promise<T> => {
   const imageB64 = Buffer.from(imageBytes).toString('base64')
-  const client = new Anthropic({ apiKey })
+
+  const client = new Anthropic({
+    apiKey,
+    ...(timeoutMs === undefined ? {} : { timeout: timeoutMs }),
+    ...(maxRetries === undefined ? {} : { maxRetries }),
+  })
 
   const message = await client.messages.create({
     model,

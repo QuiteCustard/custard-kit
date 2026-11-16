@@ -33,6 +33,23 @@ describe('alignmentField', () => {
     expect(field.defaultValue).toBe('left')
     expect(field.required).toBe(true)
   })
+
+  // Options and default are the stored enum, so a block that cannot honour all three narrows them
+  // itself rather than inheriting a value it would have to ignore.
+  it('takes a narrower option set and its own default', () => {
+    const field = alignmentField({
+      options: [
+        { label: 'Left', value: 'left' },
+        { label: 'Center', value: 'center' },
+      ],
+      defaultValue: 'center',
+    })
+
+    expect(optionValues(field)).toEqual(['left', 'center'])
+    expect(field.defaultValue).toBe('center')
+    expect(field.name).toBe('alignment')
+    expect(field.required).toBe(true)
+  })
 })
 
 describe('fullWidthField', () => {
