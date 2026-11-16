@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ImageRejectedError, numericCell, scanImage } from './scan.js'
+import { ImageRejectedError, numericCell, readImageJson, scanImage } from './scan.js'
 
 const create = vi.fn()
 const constructed = vi.fn()
@@ -76,6 +76,58 @@ describe('ImageRejectedError', () => {
     expect(err).toBeInstanceOf(ImageRejectedError)
     expect(err.name).toBe('ImageRejectedError')
     expect(err.message).toBe('This looks like a photo of a person.')
+  })
+})
+
+describe('readImageJson', () => {
+  const read = (over: Partial<Parameters<typeof readImageJson>[0]> = {}) =>
+    readImageJson({ apiKey: 'key-1', imageBytes, mediaType: 'image/png', prompt: 'P', ...over })
+
+  // The caller's prompt is the whole of what the model is told: no template, no envelope added.
+  it('sends the prompt exactly as given and returns the reply object unvalidated', async () => {
+    create.mockResolvedValue(reply('{"success":true,"rows":[]}'))
+
+    await expect(read({ prompt: 'Read the table.' })).resolves.toEqual({ success: true, rows: [] })
+    expect(create.mock.calls[0][0].messages[0].content[1]).toEqual({
+      type: 'text',
+      text: 'Read the table.',
+    })
+  })
+
+  // The trap: a thinking model's reply OPENS with its thinking block, so reading the first block
+  // throws "no text content" on every scan.
+  it('reads the text block wherever it sits in the reply', async () => {
+    create.mockResolvedValue({
+      content: [
+        { type: 'thinking', thinking: 'Looking at the image' },
+        { type: 'text', text: '{"ok":true}' },
+      ],
+    })
+
+    await expect(read()).resolves.toEqual({ ok: true })
+  })
+
+  it('throws a refusal as its own message rather than as a parse failure', async () => {
+    create.mockResolvedValue({ stop_reason: 'refusal', content: [{ type: 'text', text: '' }] })
+
+    await expect(read()).rejects.toThrow(/declined to read this image/)
+  })
+
+  it('passes effort through only when given', async () => {
+    create.mockResolvedValue(reply('{}'))
+
+    await read()
+    expect(create.mock.calls[0][0]).not.toHaveProperty('output_config')
+
+    create.mockClear()
+    await read({ effort: 'high' })
+    expect(create.mock.calls[0][0]).toMatchObject({ output_config: { effort: 'high' } })
+  })
+
+  it('refuses a reply whose JSON is not an object', async () => {
+    create.mockResolvedValue(reply('[1, 2]'))
+
+    await expect(read()).rejects.toThrow(/no JSON object/)
   })
 })
 

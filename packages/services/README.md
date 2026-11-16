@@ -74,7 +74,8 @@ slot. A missing key is never cached at all.
   just as happily without it.
 - `startgg/` — oauth, fetch-start-gg-graphql (rate-limited client), validate-url
 - `twitch/` — channel, live-streams (Helix)
-- `ocr/scan` — reads structured data out of an image with Claude vision. The caller supplies
+- `ocr/scan` — `readImageJson`: an image and your own prompt in, the reply's JSON object out
+  (thinking models and refusals handled). `scanImage` on top of it reads structured data out of an image with Claude vision. The caller supplies
   `subject` (what a valid image is), `shape` (a JSON skeleton of the result) and `parse`, so the
   result can be any shape at all — a receipt, an ID card, a league table, a form. Throws
   `ImageRejectedError` when the image isn't that thing at all, so an upload can be refused rather

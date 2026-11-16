@@ -46,6 +46,104 @@ Return ONLY a JSON object in this exact format, no other text:
 
 Use the literal values above as type hints: a number where a number is shown, a string where a string is shown, true/false where a boolean is shown. Where a value is present in the layout but unreadable, use the empty form for its type (0, "", false) rather than omitting the key.${notes ? `\n${notes}` : ''}`
 
+/** How the request to Claude is made: model, budget and patience. */
+export type ImageRequestOptions = {
+  apiKey: string
+  imageBytes: Uint8Array
+  mediaType: ImageMediaType
+  model?: string
+  /**
+   * Headroom matters: a truncated reply parses as invalid JSON and loses the whole read. A thinking
+   * model's thinking counts toward this too.
+   */
+  maxTokens?: number
+  /** `output_config.effort`, for a model that takes one. Omitted, the model's default applies. */
+  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+  /**
+   * Request timeout. The SDK's default is ten minutes; a read run inside a serverless function
+   * wants one shorter than the function's own budget.
+   */
+  timeoutMs?: number
+  /** Retries on a failed request. The SDK's default is 2; 0 keeps a slow read to one attempt. */
+  maxRetries?: number
+}
+
+/**
+ * Sends an image and a prompt to Claude and returns the JSON object in the reply, unvalidated - the
+ * transport under `scanImage`, for a caller whose prompt and reply envelope are its own.
+ *
+ * ```ts
+ * const reply = await readImageJson({ apiKey, imageBytes, mediaType: 'image/png', prompt })
+ * if (!isRecord(reply) || !Array.isArray(reply.rows)) throw new Error('unexpected reply')
+ * ```
+ *
+ * The prompt is sent exactly as given. The reply's text block is read wherever it sits, so a
+ * thinking model (whose reply opens with its thinking) works; the first `{...}` span in it is
+ * parsed. Throws when Claude refuses, returns no text, or returns no parseable JSON object.
+ *
+ * Needs the optional `@anthropic-ai/sdk` peer dependency installed.
+ */
+export const readImageJson = async ({
+  apiKey,
+  imageBytes,
+  mediaType,
+  prompt,
+  model = 'claude-sonnet-4-6',
+  maxTokens = 2048,
+  effort,
+  timeoutMs,
+  maxRetries,
+}: ImageRequestOptions & { prompt: string }): Promise<Record<string, unknown>> => {
+  const imageB64 = Buffer.from(imageBytes).toString('base64')
+
+  const client = new Anthropic({
+    apiKey,
+    ...(timeoutMs === undefined ? {} : { timeout: timeoutMs }),
+    ...(maxRetries === undefined ? {} : { maxRetries }),
+  })
+
+  const message = await client.messages.create({
+    model,
+    max_tokens: maxTokens,
+    ...(effort === undefined ? {} : { output_config: { effort } }),
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: imageB64 },
+          },
+          { type: 'text', text: prompt },
+        ],
+      },
+    ],
+  })
+
+  if (message.stop_reason === 'refusal') throw new Error('Claude declined to read this image')
+
+  const textBlock = message.content.find((block) => block.type === 'text')
+
+  if (!textBlock) throw new Error('Claude returned no text content')
+
+  const raw = /\{[\s\S]*\}/.exec(textBlock.text)?.[0]
+
+  if (!raw) throw new Error(`Claude returned no JSON object: ${textBlock.text.slice(0, 300)}`)
+
+  let parsed: unknown
+
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new Error(`Claude returned invalid JSON: ${raw.slice(0, 300)}`)
+  }
+
+  if (!isRecord(parsed))
+    throw new Error(`Claude returned unexpected structure: ${raw.slice(0, 300)}`)
+
+  return parsed
+}
+
 /**
  * Reads structured data out of an image with Claude vision, returning whatever shape the caller
  * asks for.
@@ -67,26 +165,18 @@ Use the literal values above as type hints: a number where a number is shown, a 
  *
  * Throws `ImageRejectedError` when the image isn't `subject` at all, and a plain Error when `parse`
  * returns null - so a caller decides whether a partial read is worth keeping, and gets an all-or-
- * nothing result either way.
+ * nothing result either way. For a prompt of your own, with its own reply envelope, use
+ * `readImageJson`.
  *
  * Needs an Anthropic API key and the optional `@anthropic-ai/sdk` peer dependency installed.
  */
 export const scanImage = async <T>({
-  apiKey,
-  imageBytes,
-  mediaType,
   subject,
   shape,
   parse,
   notes,
-  model = 'claude-sonnet-4-6',
-  maxTokens = 2048,
-  timeoutMs,
-  maxRetries,
-}: {
-  apiKey: string
-  imageBytes: Uint8Array
-  mediaType: ImageMediaType
+  ...request
+}: ImageRequestOptions & {
   /** What a valid image is, e.g. `'a printed shop receipt'`. */
   subject: string
   /**
@@ -98,60 +188,8 @@ export const scanImage = async <T>({
   parse: (data: unknown) => T | null
   /** Extra prompt instructions for quirks of this layout. */
   notes?: string
-  model?: string
-  /** Headroom matters: a truncated reply parses as invalid JSON and loses the whole scan. */
-  maxTokens?: number
-  /**
-   * Request timeout. The SDK's default is ten minutes; a scan run inside a serverless function
-   * wants one shorter than the function's own budget.
-   */
-  timeoutMs?: number
-  /** Retries on a failed request. The SDK's default is 2; 0 keeps a slow scan to one attempt. */
-  maxRetries?: number
 }): Promise<T> => {
-  const imageB64 = Buffer.from(imageBytes).toString('base64')
-
-  const client = new Anthropic({
-    apiKey,
-    ...(timeoutMs === undefined ? {} : { timeout: timeoutMs }),
-    ...(maxRetries === undefined ? {} : { maxRetries }),
-  })
-
-  const message = await client.messages.create({
-    model,
-    max_tokens: maxTokens,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: mediaType, data: imageB64 },
-          },
-          { type: 'text', text: buildPrompt(subject, shape, notes) },
-        ],
-      },
-    ],
-  })
-
-  const firstBlock = message.content[0]
-
-  if (!firstBlock || firstBlock.type !== 'text') throw new Error('Claude returned no text content')
-
-  const raw = /\{[\s\S]*\}/.exec(firstBlock.text)?.[0]
-
-  if (!raw) throw new Error(`Claude returned no JSON object: ${firstBlock.text.slice(0, 300)}`)
-
-  let parsed: unknown
-
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    throw new Error(`Claude returned invalid JSON: ${raw.slice(0, 300)}`)
-  }
-
-  if (!isRecord(parsed))
-    throw new Error(`Claude returned unexpected structure: ${raw.slice(0, 300)}`)
+  const parsed = await readImageJson({ ...request, prompt: buildPrompt(subject, shape, notes) })
 
   // The envelope is model-generated, so every field is read with its own check. Declaring it as a
   // typed shape would claim `valid` is a boolean and `error` a string without either being tested,
