@@ -53,7 +53,8 @@ for package contents and consumption options.
   automatically importable as `@quitecustard/<pkg>/<path>`.
 - Modules live in folders, and the folder is part of the import path: `core` groups by kind
   (`format` `media` `url` `utils`), `services` by vendor (`discord` `steam` `startgg` `twitch`
-  `ocr`), `payload` by concern (`access` `db` `documents` `errors` `fields` `operations`), `react` by kind
+  `ocr`), `payload` by concern (`access` `admin` `db` `documents` `errors` `fields` `operations`; `admin`
+  holds `'use client'` components the admin renders by import path), `react` by kind
   (`hooks`). Put a new
   module where its neighbours are and keep cross-folder imports rare — today the only ones point at
   `internal/`. For `services` the folder is load-bearing rather than tidy: flattened, `discord/api`

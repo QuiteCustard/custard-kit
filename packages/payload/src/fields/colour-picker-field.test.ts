@@ -1,26 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { colourPickerField } from './colour-picker-field.js'
-
-const component = '@/components/colour-picker/ColourPicker'
+import { colourPickerComponent, colourPickerField } from './colour-picker-field.js'
 
 describe('colourPickerField', () => {
-  it('is a text field wired to the caller’s admin component', () => {
-    const field = colourPickerField(component)
+  it('is a text field rendered by this package’s own picker by default', () => {
+    const field = colourPickerField()
 
     expect(field.type).toBe('text')
     expect(field.name).toBe('colour')
     expect(field.label).toBe('Colour')
-    expect(field.admin?.components?.Field).toBe(component)
+    expect(field.admin?.components?.Field).toBe(colourPickerComponent)
   })
 
-  // This package ships no UI, so the component path is required rather than defaulted - a default
-  // would resolve to nothing in the consumer's app and fail at admin render time.
-  it('uses whatever component path it was given', () => {
-    expect(colourPickerField('@/x/Y').admin?.components?.Field).toBe('@/x/Y')
+  // The path is what Payload's import map resolves: it must name the module's real location and
+  // export, or the admin fails at render time rather than at build.
+  it('names the module and export that ship the picker', () => {
+    expect(colourPickerComponent).toBe('@quitecustard/payload/admin/colour-picker#ColourPicker')
+  })
+
+  it('uses a caller’s own component when given one', () => {
+    expect(colourPickerField({}, '@/x/Y').admin?.components?.Field).toBe('@/x/Y')
   })
 
   it('takes name, label and other overrides', () => {
-    const field = colourPickerField(component, { name: 'accent', label: 'Accent', required: true })
+    const field = colourPickerField({ name: 'accent', label: 'Accent', required: true })
 
     expect(field.name).toBe('accent')
     expect(field.label).toBe('Accent')
@@ -28,22 +30,22 @@ describe('colourPickerField', () => {
   })
 
   it('keeps the component when the caller supplies its own admin block', () => {
-    const field = colourPickerField(component, { admin: { condition: () => true } })
+    const field = colourPickerField({ admin: { condition: () => true } })
 
-    expect(field.admin?.components?.Field).toBe(component)
+    expect(field.admin?.components?.Field).toBe(colourPickerComponent)
     expect(typeof field.admin?.condition).toBe('function')
   })
 
   it('keeps a caller’s other admin components alongside the Field', () => {
-    const field = colourPickerField(component, {
+    const field = colourPickerField({
       admin: { components: { Label: '@/components/colour-picker/Label' } },
     })
 
-    expect(field.admin?.components?.Field).toBe(component)
+    expect(field.admin?.components?.Field).toBe(colourPickerComponent)
     expect(field.admin?.components?.Label).toBe('@/components/colour-picker/Label')
   })
 
   it('returns a new object each call, since buildConfig sanitises fields in place', () => {
-    expect(colourPickerField(component)).not.toBe(colourPickerField(component))
+    expect(colourPickerField()).not.toBe(colourPickerField())
   })
 })

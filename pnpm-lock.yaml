@@ -67,9 +67,15 @@ importers:
       '@payloadcms/plugin-seo':
         specifier: 3.88.0
         version: 3.88.0(@types/react@19.2.18)(monaco-editor@0.56.0)(next@16.3.1(@types/node@22.19.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(payload@3.88.0(bufferutil@4.1.0)(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+      '@payloadcms/ui':
+        specifier: 3.88.0
+        version: 3.88.0(@types/react@19.2.18)(monaco-editor@0.56.0)(next@16.3.1(@types/node@22.19.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(payload@3.88.0(bufferutil@4.1.0)(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       '@types/node':
         specifier: 22.19.9
         version: 22.19.9
+      '@types/react':
+        specifier: 19.2.18
+        version: 19.2.18
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(pg@8.20.0)
@@ -79,6 +85,12 @@ importers:
       payload:
         specifier: 3.88.0
         version: 3.88.0(bufferutil@4.1.0)(graphql@16.14.2)(typescript@6.0.3)
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: 19.2.8
+        version: 19.2.8(react@19.2.8)
 
   packages/react:
     devDependencies:

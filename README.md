@@ -38,17 +38,19 @@ Notes:
 ### `@quitecustard/payload`
 
 Helpers generic over any Payload v3 project. Peer deps: `payload` (required),
-`@payloadcms/drizzle` + `drizzle-orm` (optional — only `db/`) and `next` (optional — only
-`operations/after-response` and `operations/accent-colour-hook`).
+`@payloadcms/drizzle` + `drizzle-orm` (optional — only `db/`), `next` (optional — only
+`operations/after-response` and `operations/accent-colour-hook`) and `@payloadcms/ui` + `react`
+(optional — only `admin/`).
 Payload's module augmentation means the consumer's generated types flow through
 `CollectionSlug`-generic helpers automatically.
 
 - `documents/` — relation narrowing, localised reads, the published clause, version config, rich
   text as plain text
 - `access/` — anyone/nobody, role gates, the self check across Payload's three field-access shapes
+- `admin/` — client components for Payload's admin: a colour picker that can be cleared
 - `fields/` — field and admin-config factories: link, hero, owner, SEO tab, colour, phone, height,
-  size, spacing, layout, media-content. Ships no UI, so a custom component's path is a required
-  parameter rather than a default.
+  size, spacing, layout, media-content. The colour fields render `admin/colour-picker` by default;
+  phone and height take their component's path as a required parameter.
 - `db/` — transactions, raw-SQL helpers, sync locking, orphan cleanup, bulk delete, import-provenance
   fields and their indexes. Postgres only.
 - `errors/` — the one reader for Payload's per-field messages, duplicate detection, a user-safe message

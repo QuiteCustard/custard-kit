@@ -13,6 +13,9 @@
     // Wider than the ES2022 the build targets, so a test may assert with a method the runtime floor
     // (node >= 20) has but no shipped module calls - `String.prototype.isWellFormed` being the one.
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    // `admin/` holds client components Payload's admin renders; the JSX compiles to plain
+    // `react/jsx-runtime` calls, so the emitted module needs no bundler step of its own.
+    "jsx": "react-jsx",
     // Mirrors the vitest aliases, so a cross-package import is checked against that package's
     // SOURCE - the same thing the tests actually run against.
     "paths": {

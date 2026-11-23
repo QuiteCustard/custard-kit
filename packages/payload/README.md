@@ -16,8 +16,8 @@ pnpm add @quitecustard/payload
 Every module is a subpath export, so TypeScript needs `moduleResolution` set to `bundler`,
 `node16` or `nodenext` — the legacy `node` resolution can't see subpath exports at all.
 
-Peer dependencies: `payload` (required), `@payloadcms/drizzle` + `drizzle-orm` and `next` (optional —
-only some modules touch them). Payload's module augmentation means a consumer's generated types
+Peer dependencies: `payload` (required), `@payloadcms/drizzle` + `drizzle-orm`, `next`, and
+`@payloadcms/ui` + `react` (optional — only some modules touch them; the last two only `admin/`). Payload's module augmentation means a consumer's generated types
 flow through the `CollectionSlug`-generic helpers automatically.
 
 ## Contents
@@ -47,11 +47,22 @@ shows on hover — this page is the map, not the reference.
   three field-access argument shapes; takes a `getUserId` resolver for a project with more than one
   auth collection
 
+### `admin/` — client components for Payload's admin
+
+Referenced by import path from a field's `admin.components`, as Payload's import map resolves them
+(`@quitecustard/payload/admin/<module>#<Export>`). Run `payload generate:importmap` once after
+adding one. Needs the `@payloadcms/ui` and `react` peers.
+
+- `colour-picker` — `ColourPicker`: the browser's colour input over a text field, with the value
+  shown beside it and a Clear button. Stays empty until a colour is picked, so an empty value can
+  mean "use the default". No transparency: keep an `rgba(…)` field as plain text.
+
 ### `fields/` — field and admin-config factories
 
-Every field rendered by a custom component takes that component's import path as a **required**
-parameter — pass your own. Each is a factory, never a shared constant: `buildConfig` sanitises field
-objects in place, so two collections must not receive one.
+The colour fields render `admin/colour-picker` unless given another component's path. The phone
+and height fields take their component's import path as a **required** parameter — pass your own.
+Each is a factory, never a shared constant: `buildConfig` sanitises field objects in place, so two
+collections must not receive one.
 
 - `link-field` — polymorphic link (internal reference, custom URL, optional static route, dropdown,
   in-page anchor, phone, email); each type appears only if its collection or component was supplied

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { isRecord } from '@quitecustard/core/utils/is-record'
 import { colourOptionsField } from './colour-options-field.js'
+import { colourPickerComponent } from './colour-picker-field.js'
 
 const component = '@/components/colour-picker/ColourPicker'
 
@@ -58,6 +59,14 @@ describe('colourOptionsField', () => {
 
     expect(isRecord(custom?.admin) ? custom.admin.components : null).toMatchObject({
       Field: component,
+    })
+  })
+
+  it('uses this package’s own picker when no component is given', () => {
+    const custom = childNamed(colourOptionsField({ presetOptions }), 'custom')
+
+    expect(isRecord(custom?.admin) ? custom.admin.components : null).toMatchObject({
+      Field: colourPickerComponent,
     })
   })
 
