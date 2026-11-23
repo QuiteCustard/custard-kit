@@ -15,6 +15,7 @@ describe('startPollLoop', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it('polls at once, then every interval, until stopped', () => {
@@ -74,6 +75,36 @@ describe('startPollLoop', () => {
 
     expect(poll).toHaveBeenCalledTimes(polled)
     expect(polled).toBeLessThanOrEqual(4)
+    stop()
+  })
+
+  // A sync throw used to skip scheduling the next poll, stopping the loop for good.
+  it('keeps polling after a poll throws, and logs it', () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const poll = vi.fn(() => {
+      throw new Error('offline')
+    })
+    const stop = startPollLoop(poll, { intervalMs: 1000 })
+
+    vi.advanceTimersByTime(2000)
+
+    expect(poll).toHaveBeenCalledTimes(3)
+    expect(logged).toHaveBeenCalledWith('[poll-loop] poll failed', expect.any(Error))
+    stop()
+  })
+
+  // A data poll is async; its rejection would otherwise be unhandled on every tick.
+  it('catches an async poll that rejects', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+
+    const stop = startPollLoop(() => Promise.reject(new Error('offline')), { intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(logged).toHaveBeenCalledTimes(2)
+    expect(unhandled).not.toHaveBeenCalled()
+    process.off('unhandledRejection', unhandled)
     stop()
   })
 })

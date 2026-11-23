@@ -88,13 +88,19 @@ const attemptPage = async <T>(
   }
 
   let res: Response
+  let json: unknown = null
 
   try {
     res = await fetchStartggGraphQL(query, { ...variables, perPage }, options)
+
+    // Read inside the same try: the request's timeout also covers the body, and a gateway can
+    // answer 200 with a page that isn't JSON.
+    if (res.ok) json = await res.json()
   } catch (e) {
-    // The fetch itself can reject - a request timeout (AbortSignal.timeout) or a dropped connection -
-    // which would otherwise throw straight past all the retry handling below and abort the whole sync.
-    // These are transient, so back off and retry like any other recoverable failure.
+    // The fetch or its body read can reject - a request timeout (AbortSignal.timeout), a dropped
+    // connection, a body that isn't JSON - which would otherwise throw straight past all the retry
+    // handling below and abort the whole sync. These are transient, so back off and retry like any
+    // other recoverable failure.
     const detail = e instanceof Error ? e.message : String(e)
 
     if (attempt < maxRetries) {
@@ -125,7 +131,6 @@ const attemptPage = async <T>(
     return null
   }
 
-  const json: unknown = await res.json()
   const body: Record<string, unknown> = isRecord(json) ? json : {}
   const errors = Array.isArray(body.errors) ? body.errors : []
 

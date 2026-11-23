@@ -10,14 +10,15 @@ export type PollLoopOptions = {
 
 /**
  * Calls `poll` every `intervalMs` in a browser page, and returns the function that stops it.
- * `poll` is not awaited, so a slow one does not delay the next.
+ * `poll` may be async and is not awaited, so a slow one does not delay the next. A poll that throws
+ * or rejects is logged and the loop carries on.
  *
  * A hidden page (a background tab, a browser source outside the live scene) polls no faster than
  * `hiddenFloorMs`, and stops once it has been hidden for `idleAfterMs`. Becoming visible polls at
  * once and resumes. Needs `document`: call it from browser code, such as an effect.
  */
 export const startPollLoop = (
-  poll: () => void,
+  poll: () => unknown,
   {
     intervalMs,
     immediate = true,
@@ -28,12 +29,22 @@ export const startPollLoop = (
   let timer: ReturnType<typeof setTimeout> | null = null
   let hiddenSince: number | null = document.hidden ? Date.now() : null
 
+  // Caught here, not left to the timer: a sync throw would skip scheduling the next poll and stop
+  // the loop, and a rejection would surface as an unhandled one on every tick.
+  const runPoll = async () => {
+    try {
+      await poll()
+    } catch (error) {
+      console.error('[poll-loop] poll failed', error)
+    }
+  }
+
   const schedule = () => {
     if (hiddenSince !== null && Date.now() - hiddenSince >= idleAfterMs) return
 
     timer = setTimeout(
       () => {
-        poll()
+        void runPoll()
         schedule()
       },
       hiddenSince === null ? intervalMs : Math.max(intervalMs, hiddenFloorMs),
@@ -48,11 +59,11 @@ export const startPollLoop = (
 
     hiddenSince = null
     if (timer !== null) clearTimeout(timer)
-    poll()
+    void runPoll()
     schedule()
   }
 
-  if (immediate) poll()
+  if (immediate) void runPoll()
   schedule()
   document.addEventListener('visibilitychange', onVisibility)
 

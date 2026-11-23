@@ -235,4 +235,12 @@ describe('getLiveStreams', () => {
 
     expect(requests[1]?.headers['client-id']).toBe(auth.clientId)
   })
+
+  // `res.json()` sits after the request's own try: a gateway's HTML page on a 200, or the timeout
+  // firing mid-body, would throw past the never-throws promise.
+  it('returns an empty list when the streams body is not JSON', async () => {
+    stubFetch([tokenResponse(), { text: '<html>gateway</html>' }])
+
+    await expect(getLiveStreams(['abc'], freshAuth())).resolves.toEqual([])
+  })
 })

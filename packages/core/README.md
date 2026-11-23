@@ -20,7 +20,7 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
 ## Contents
 
 - `utils/` — sleep, is-record, read-json, one-of, numbers, safe-equal, form-data, slug-to-label,
-  rgb-to-hex, cn, held, poll-loop
+  rgb-to-hex, cn, held, poll-loop, base64url, signed-token
 - `format/` — normalise (transliteration/slug/IGN pipeline), get-initials, ordinal, sanitise-text,
   profanity
 - `format/date` — isValidDate, dateRangeReversed, dateRangeNotAfter, and the `<input type="datetime-local">` ↔ ISO
@@ -49,7 +49,15 @@ Every module is a subpath export, so TypeScript needs `moduleResolution` set to 
   values held for the seconds each caller asks, concurrent loads of a key shared, and nothing
   written to a platform data cache that bills per write. On serverless each instance holds its own.
 - `utils/poll-loop` (`startPollLoop(poll, { intervalMs })`) needs a browser `document`: a hidden
-  page polls at most every 5 s and stops after 10 minutes hidden, both options.
+  page polls at most every 5 s and stops after 10 minutes hidden, both options. `poll` may be async;
+  a poll that throws or rejects is logged and the loop carries on.
+- `format/date`'s `formatDate` renders a value that isn't a date (an empty or malformed string, an
+  invalid `Date`) as `''` rather than throwing mid-render.
+- `utils/signed-token` (`signToken(value, expiresAt, secret)`, `readToken(token, { secret, now })`)
+  signs state a client carries between server calls with HMAC-SHA256 on Web Crypto: readable by the
+  client, never changeable by it, so nothing secret goes in. The same value, expiry and secret sign
+  to the same token, so an expiry worked out from the value gives a cacheable address. The secret
+  is at least 32 characters.
 - `format/date` takes a date-fns `Locale` object directly rather than a locale string, so the kit
   never has to know which locales a project ships.
 - `media/image-mime` verifies that `<svg` is the document's **root** element — an HTML page with an

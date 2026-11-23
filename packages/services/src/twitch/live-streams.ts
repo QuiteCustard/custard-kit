@@ -209,7 +209,19 @@ export const getLiveStreams = async (
     return []
   }
 
-  const json: unknown = await res.json()
+  // The request's timeout also covers reading the body, and a gateway can answer 200 with a page
+  // that isn't JSON: either throws here.
+  let json: unknown
+
+  try {
+    json = await res.json()
+  } catch (e) {
+    console.error(
+      `[twitch] streams response unreadable: ${e instanceof Error ? e.message : String(e)}`,
+    )
+    return []
+  }
+
   const rows = isRecord(json) && Array.isArray(json.data) ? json.data : []
 
   return rows.flatMap((row) => parseStream(row) ?? [])

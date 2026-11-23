@@ -64,7 +64,8 @@ export const isoToDateInput = (iso: string | null | undefined): string => {
  *
  * A `Date` instance reaches `format` unchanged, so a zone-carrying subclass such as `UTCDate` from
  * `@date-fns/utc` or `TZDate` from `@date-fns/tz` renders in its own zone rather than the
- * machine's. Strings and epochs are parsed as `new Date` would.
+ * machine's. Strings and epochs are parsed as `new Date` would. A value that isn't a date - an empty
+ * or malformed string, an invalid `Date` - formats as `''` rather than throwing mid-render.
  *
  * ```ts
  * import { enGB } from 'date-fns/locale'
@@ -75,4 +76,10 @@ export const formatDate = (
   date: Date | string | number,
   pattern: string,
   locale?: DateFnsLocale,
-): string => format(date, pattern, locale ? { locale } : undefined)
+): string => {
+  // date-fns `isValid` reads a string as invalid outright, so a string is parsed first.
+  const value = typeof date === 'string' ? new Date(date) : date
+  if (!isValid(value)) return ''
+
+  return format(value, pattern, locale ? { locale } : undefined)
+}

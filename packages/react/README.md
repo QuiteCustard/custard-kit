@@ -25,7 +25,11 @@ so below.
 - `use-action-runner` — `useActionRunner()` runs a Next.js server action from a client component.
   It returns `{ run, isPending, error, setError }`: `run(action, onSuccess?)` clears the last error,
   runs the action in a transition, sets `error` when the action answers `{ error: string }`, and
-  otherwise calls `onSuccess` with the result and then refreshes the route. Needs `next`.
+  otherwise calls `onSuccess` with the result and then refreshes the route. An action that throws
+  (a dropped connection, a crashed action) sets `error` to `failureMessage`
+  (`useActionRunner({ failureMessage })`, default "Something went wrong. Please try again.")
+  instead of reaching an error boundary; Next's `redirect()` and `notFound()` still pass through.
+  Needs `next`.
 
 ```tsx
 'use client'

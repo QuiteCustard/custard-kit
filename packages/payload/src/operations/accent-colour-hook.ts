@@ -1,6 +1,8 @@
-import type { BasePayload, CollectionAfterChangeHook } from 'payload'
+import type { BasePayload, CollectionAfterChangeHook, PayloadRequest } from 'payload'
+import { isRecord } from '@quitecustard/core/utils/is-record'
 import { relId } from '../documents/resolve-ref.js'
 import { runAfterResponse } from './after-response.js'
+import { withSuppressedContext } from './suppress-context.js'
 
 /**
  * Keeps a colour field on a document in step with the document's picture - a crest, a hero image, a
@@ -44,12 +46,9 @@ export type AccentColourHookOptions = {
   suppressContextKey?: string
 }
 
-/** A url already on a populated relationship saves a lookup in the deferred work. */
-const inlineUrl = (ref: unknown): string | null => {
-  if (!ref || typeof ref !== 'object') return null
-  const url = (ref as { url?: unknown }).url
-  return typeof url === 'string' && url.length > 0 ? url : null
-}
+/** A media doc's url, or null when it has none. */
+const urlOf = (doc: unknown): string | null =>
+  isRecord(doc) && typeof doc.url === 'string' && doc.url.length > 0 ? doc.url : null
 
 export const accentColourHook = (options: AccentColourHookOptions): CollectionAfterChangeHook => {
   const { field, source, extract, suppressContextKey = 'disableHook' } = options
@@ -66,18 +65,20 @@ export const accentColourHook = (options: AccentColourHookOptions): CollectionAf
 
     // Nothing to do without a picture, and nothing to do when the picture is unchanged and a
     // colour is already stored. Both checks are cheap and stay on the save's critical path.
-    if (imageId === null) return doc
+    const docId = relId(doc.id)
+    if (imageId === null || docId === null) return doc
     if (imageId === previousImageId && doc[field]) return doc
 
-    const tag = '[' + field + '] ' + collection.slug + '#' + String(doc.id)
+    const tag = '[' + field + '] ' + collection.slug + '#' + String(docId)
     await deferredWrite({
       payload,
+      req,
       picked,
       imageId,
       tag,
       field,
       extract,
-      doc,
+      docId,
       collection,
       suppressContextKey,
     })
@@ -86,37 +87,40 @@ export const accentColourHook = (options: AccentColourHookOptions): CollectionAf
   }
 }
 
-/** The post-commit half: resolve a url, extract a colour, write it back. */
+/** The follow-up half: resolve a url, extract a colour, write it back. */
 const deferredWrite = async (args: {
   payload: BasePayload
+  req: PayloadRequest
   picked: AccentColourSource
   imageId: number | string
   tag: string
   field: string
   extract: (url: string) => Promise<string | null>
-  doc: Record<string, unknown>
+  docId: number | string
   collection: { slug: string }
   suppressContextKey: string
 }): Promise<void> => {
-  const { payload, picked, imageId, tag, field, extract, doc, collection, suppressContextKey } =
-    args
-  const known = inlineUrl(picked.ref)
-  const collectionSlug = collection.slug
-  const docId = doc.id as number | string
+  const { payload, req, picked, imageId, tag, field, extract, docId, collection } = args
+  const { suppressContextKey } = args
+  const known = urlOf(picked.ref)
 
-  // Runs post-commit in its own transaction, so it must not reuse `req`, and it reads the
-  // just-committed document.
-  await runAfterResponse(payload, async () => {
-    let url = known
-    if (!url) {
-      const image = await payload.findByID({
-        collection: picked.collection,
-        id: imageId,
-        depth: 0,
-      })
-      const resolved = (image as { url?: unknown } | null)?.url
-      url = typeof resolved === 'string' ? resolved : null
-    }
+  await runAfterResponse(payload, async (deferred) => {
+    // Deferred, the save has committed and its transaction is closed, so the work runs on its own
+    // and reads the committed document. Inline (a script or a seed, outside a Next request), the
+    // save's transaction is still open and holds this document's row: work on another connection
+    // would wait on that lock, so it runs on the save's own `req` instead.
+    const own = deferred ? undefined : req
+
+    const image = known
+      ? null
+      : await payload.findByID({
+          collection: picked.collection,
+          id: imageId,
+          depth: 0,
+          disableErrors: true,
+          ...(own ? { req: own } : {}),
+        })
+    const url = known ?? urlOf(image)
 
     if (!url) {
       payload.logger.warn(tag + ' no url for ' + picked.collection + '#' + String(imageId))
@@ -129,14 +133,18 @@ const deferredWrite = async (args: {
       return
     }
 
-    await payload.update({
-      collection: collectionSlug,
-      id: docId,
-      data: { [field]: colour },
-      // Suppressed so this write does not re-enter the hook. Revalidation is left ENABLED on
-      // purpose: the triggering save revalidated before this colour existed, so this write has to
-      // purge again for it to show.
-      context: { [suppressContextKey]: true },
-    })
+    // Suppressed so this write does not re-enter the hook. Revalidation is left ENABLED on purpose:
+    // the triggering save revalidated before this colour existed, so this write has to purge again
+    // for it to show.
+    const write = () =>
+      payload.update({
+        collection: collection.slug,
+        id: docId,
+        data: { [field]: colour },
+        ...(own ? { req: own } : { context: { [suppressContextKey]: true } }),
+      })
+
+    if (own) await withSuppressedContext(own, [suppressContextKey], write)
+    else await write()
   })
 }

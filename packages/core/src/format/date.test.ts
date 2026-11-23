@@ -127,4 +127,11 @@ describe('formatDate', () => {
       '2026-08-21 23:30',
     )
   })
+
+  // date-fns `format` throws "Invalid time value" on an invalid date, which would take a whole
+  // render down for one empty or malformed field.
+  it('formats a value that is not a date as an empty string instead of throwing', () => {
+    for (const value of ['', 'nonsense', Number.NaN, new Date('nonsense')])
+      expect(formatDate(value, 'yyyy-MM-dd')).toBe('')
+  })
 })

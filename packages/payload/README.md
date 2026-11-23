@@ -111,7 +111,8 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
   collection cannot see
 - `accent-colour-hook` — `accentColourHook({field, source, extract})`: an afterChange hook that
   keeps a colour field in step with the document's picture, deferred past the response. The decode
-  is the caller's `extract`.
+  is the caller's `extract`. Outside a Next request (a script, a seed) it runs inline on the save's
+  own `req`, since the save's open transaction holds the document's row.
 
 `src/internal/` holds implementation detail and is not importable: `"./internal/*": null` sits ahead
 of the wildcard in `exports`.

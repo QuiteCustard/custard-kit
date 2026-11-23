@@ -135,6 +135,17 @@ describe('transient failures', () => {
     await expect(result).resolves.toBeNull()
   })
 
+  // The body read throws too: the request's timeout covers it, and a gateway can answer 200 with an
+  // HTML page. Outside the fetch's try it would escape the retries and abort the sync.
+  it('retries a 200 whose body is not JSON, and gives up without throwing', async () => {
+    const retried = page([{ text: '<html>gateway</html>' }, ok({ event: { id: 7 } })])
+
+    await expect(retried.result).resolves.toMatchObject({ data: { id: 7 } })
+    expect(retried.stub.calls()).toBe(2)
+
+    await expect(page([{ text: '<html>gateway</html>' }]).result).resolves.toBeNull()
+  })
+
   // start.gg answers 200 with a generic error and a null data payload during a brief outage.
   it('retries a 200 carrying errors or a null data payload', async () => {
     const withErrors = page([

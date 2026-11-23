@@ -13,18 +13,48 @@ const runsInline = () => {
   })
 }
 
+/** Inside a request scope `after` queues the work; `flushAfter` runs it, as the response ending would. */
+const runsDeferred = () => {
+  const queued: (() => Promise<void>)[] = []
+  vi.mocked(after).mockImplementation((task) => {
+    if (typeof task === 'function') queued.push(async () => void (await task()))
+  })
+
+  return async () => {
+    for (const task of queued.splice(0)) await task()
+  }
+}
+
 const logs: string[] = []
-const updates: unknown[] = []
-const found: { collection: string; id: number | string }[] = []
+const errors: unknown[] = []
+const updates: Record<string, unknown>[] = []
+const found: Record<string, unknown>[] = []
+
+/** The write's `req.context` flag as it stood while the write ran. */
+const flagDuringWrite: unknown[] = []
 
 const payload = payloadFixture({
-  logger: { warn: (message: unknown) => logs.push(String(message)), error: () => {} },
-  findByID: (args: { collection: string; id: number | string }) => {
-    found.push({ collection: args.collection, id: args.id })
+  logger: {
+    warn: (message: unknown) => logs.push(String(message)),
+    error: (...args: unknown[]) => errors.push(args),
+  },
+  // As Payload's findByID: a missing doc throws NotFound, or reads as null with `disableErrors`.
+  findByID: (args: Record<string, unknown>) => {
+    found.push(args)
+    if (args.id === 404)
+      return args.disableErrors ? Promise.resolve(null) : Promise.reject(new Error('Not Found'))
+
     return Promise.resolve(args.id === 7 ? { url: '/media/crest.png' } : {})
   },
-  update: (args: unknown) => {
+  update: (args: Record<string, unknown>) => {
     updates.push(args)
+    const req = args.req
+    const context = req && typeof req === 'object' && 'context' in req ? req.context : undefined
+    flagDuringWrite.push(
+      context && typeof context === 'object' && 'disableHook' in context
+        ? context.disableHook
+        : undefined,
+    )
     return Promise.resolve({})
   },
 })
@@ -42,6 +72,7 @@ const hook = (args: {
   previous?: Record<string, unknown>
   context?: Record<string, unknown>
   extract?: (url: string) => Promise<string | null>
+  req?: ReturnType<typeof requestFixture>
 }) => {
   const subject = accentColourHook({
     field: 'accentColour',
@@ -53,7 +84,7 @@ const hook = (args: {
     doc: { id: 1, ...args.doc },
     previousDoc: { id: 1, ...args.previous },
     collection: { slug: 'teams' },
-    req: requestFixture({ payload, context: args.context ?? {} }),
+    req: args.req ?? requestFixture({ payload, context: args.context ?? {} }),
     operation: 'update',
     context: args.context ?? {},
   } as unknown as Parameters<typeof subject>[0])
@@ -61,16 +92,39 @@ const hook = (args: {
 
 beforeEach(() => {
   logs.length = 0
+  errors.length = 0
   updates.length = 0
   found.length = 0
+  flagDuringWrite.length = 0
   runsInline()
 })
 
 describe('accentColourHook', () => {
-  it('resolves the image url, extracts a colour and writes it back', async () => {
-    await hook({ ref: 7 })
+  // The trap: inline, the save's transaction is still open and holds this row, so a write without
+  // `req` runs on another connection and waits on that lock for good.
+  it('inline, writes on the save’s own request with the hook switched off for the write', async () => {
+    const req = requestFixture({ payload, context: {} })
 
-    expect(found).toEqual([{ collection: 'team-images', id: 7 }])
+    await hook({ ref: 7, req })
+
+    expect(found).toEqual([
+      { collection: 'team-images', id: 7, depth: 0, disableErrors: true, req },
+    ])
+    expect(updates).toEqual([
+      { collection: 'teams', id: 1, data: { accentColour: '#1f2937' }, req },
+    ])
+    expect(flagDuringWrite).toEqual([true])
+    expect(req.context.disableHook).toBeUndefined()
+  })
+
+  it('deferred, runs after the response on its own transaction', async () => {
+    const flush = runsDeferred()
+
+    await hook({ ref: 7 })
+    expect(updates).toEqual([])
+
+    await flush()
+    expect(found).toEqual([{ collection: 'team-images', id: 7, depth: 0, disableErrors: true }])
     expect(updates).toEqual([
       {
         collection: 'teams',
@@ -79,6 +133,14 @@ describe('accentColourHook', () => {
         context: { disableHook: true },
       },
     ])
+  })
+
+  it('warns, rather than logging a failure, when the image has been deleted', async () => {
+    await hook({ ref: 404 })
+
+    expect(updates).toEqual([])
+    expect(errors).toEqual([])
+    expect(logs).toEqual(['[accentColour] teams#1 no url for team-images#404'])
   })
 
   it('skips the lookup when the relationship already carries a url', async () => {
