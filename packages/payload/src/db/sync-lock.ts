@@ -1,6 +1,7 @@
 import { type BasePayload } from 'payload'
 import { sql } from 'drizzle-orm'
 import { isRecord } from '@quitecustard/core/utils/is-record'
+import { advisoryLockSql } from './advisory-lock.js'
 import { rowCount } from './sql-result.js'
 
 const defaultStaleMs = 60 * 60 * 1000
@@ -96,7 +97,7 @@ export const createSyncLock = ({
     // lock therefore costs two extra statements - the advisory lock and the retry - plus a read of
     // the global, against the one statement an uncontended claim returns on.
     return await payload.db.drizzle.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${slug}))`)
+      await tx.execute(advisoryLockSql(slug))
 
       const retry = await tx.execute(sql`
         UPDATE ${lockTable}

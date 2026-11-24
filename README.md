@@ -51,7 +51,7 @@ Payload's module augmentation means the consumer's generated types flow through
 - `fields/` — field and admin-config factories: link, hero, owner, SEO tab, colour, phone, height,
   size, spacing, layout, media-content. The colour fields render `admin/colour-picker` by default;
   phone and height take their component's path as a required parameter.
-- `db/` — transactions, raw-SQL helpers, sync locking, orphan cleanup, bulk delete, import-provenance
+- `db/` — transactions, raw-SQL helpers, advisory and sync locking, orphan cleanup, bulk delete, import-provenance
   fields and their indexes. Postgres only.
 - `errors/` — the one reader for Payload's per-field messages, duplicate detection, a user-safe message
 - `operations/` — autosave-vs-unpublish, ref-counted context flags, deferred work, the job drain,

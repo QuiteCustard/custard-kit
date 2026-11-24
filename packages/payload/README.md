@@ -83,6 +83,10 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
 - `transaction-db` — the drizzle handle bound to an open transaction, so raw SQL commits with the
   local-API writes around it instead of running on a separate connection
 - `sessions` — `appendUserSession`: a race-safe INSERT onto an auth collection's session array
+- `advisory-lock` — Postgres advisory locks on a named key (`team-record:12`):
+  `holdAdvisoryLock(payload, transactionID, key)` on the caller's transaction,
+  `withAdvisoryLock(payload, key, run)` in a transaction of its own that retries a busy lock, and
+  `advisoryLockSql(key)` for a raw drizzle transaction
 - `sync-lock` — `createSyncLock({slug, table, staleMs})`: single-flight locking for a long job, as a
   conditional UPDATE rather than a read-then-write
 - `orphan-cleanup` — `findDeletableIds`, with guard rails that refuse rather than return everything,
