@@ -26,10 +26,12 @@ export const componentField = <F extends Field & { name: string; label?: unknown
 ): F => {
   const { name = defaults.name, label = defaults.label, admin, ...rest } = overrides ?? {}
 
+  // Keys in the order a field is read: what it is, then the caller's keys as written, then admin.
   return {
-    type,
     name,
+    type,
     label,
+    ...rest,
     admin: {
       ...admin,
       components: {
@@ -37,7 +39,6 @@ export const componentField = <F extends Field & { name: string; label?: unknown
         Field: component,
       },
     },
-    ...rest,
     // Spreading `overrides` over a field literal widens it past the branch of Payload's field
     // union it belongs to, so the cast reshapes a literal this function authored - it is not
     // narrowing unknown data.

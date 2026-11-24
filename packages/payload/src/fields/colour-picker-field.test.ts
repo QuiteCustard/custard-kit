@@ -29,6 +29,24 @@ describe('colourPickerField', () => {
     expect(field.required).toBe(true)
   })
 
+  it('writes its keys in field order: name, type, label, the caller’s keys, then admin', () => {
+    const field = colourPickerField({
+      admin: { description: 'Shown on cards' },
+      name: 'accent',
+      required: true,
+      defaultValue: '#000000',
+    })
+
+    expect(Object.keys(field)).toEqual([
+      'name',
+      'type',
+      'label',
+      'required',
+      'defaultValue',
+      'admin',
+    ])
+  })
+
   it('keeps the component when the caller supplies its own admin block', () => {
     const field = colourPickerField({ admin: { condition: () => true } })
 
