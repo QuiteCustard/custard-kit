@@ -55,7 +55,8 @@ Payload's module augmentation means the consumer's generated types flow through
   fields and their indexes. Postgres only.
 - `errors/` — the one reader for Payload's per-field messages, duplicate detection, a user-safe message
 - `operations/` — autosave-vs-unpublish, ref-counted context flags, deferred work, the job drain,
-  unique slugs and usernames, an accent colour kept in step with a document's picture
+  unique slugs and usernames, an accent colour kept in step with a document's picture, redirects
+  that keep a renamed page's old address alive
 
 The [package README](packages/payload/README.md#contents) lists each module; every export carries
 JSDoc, so an editor shows the detail on hover.

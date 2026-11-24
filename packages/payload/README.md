@@ -110,6 +110,11 @@ Postgres only, and the only folder needing the `@payloadcms/drizzle` + `drizzle-
 - `suppress-context` — ref-counted `req.context` flags, safe under a bulk operation's shared context
 - `after-response` — defer non-critical work past the response, falling back to inline outside a request
 - `run-queued-jobs` — drains the Payload job queue, which nothing else does
+- `upsert-redirect` — points an old address at a document by reference in a
+  `@payloadcms/plugin-redirects` collection, never redirecting a live address to itself; and
+  `claimRedirectPath`, which clears every redirect out of an address a page now answers on
+- `redirect-on-slug-change` — `redirectOnSlugChange({path, hasPage, skip, redirects})`: an
+  afterChange hook that keeps a page's old address alive when its document's slug changes
 - `unique-slug`, `unique-username` — collision-free values, each candidate checked exactly.
   `resolveUniqueUsername` takes an `isTaken` hook for a name that is unavailable for a reason the
   collection cannot see
@@ -193,6 +198,8 @@ replacing it, so registering both on one table is safe.
   other five folders work on any adapter.
 - `fields/seo-tab` assumes `@payloadcms/plugin-seo`, and `operations/after-response` assumes `next`,
   as does `operations/accent-colour-hook`, which defers through it. Those are the only modules
-  touching either peer.
+  touching either peer. `operations/upsert-redirect` and `operations/redirect-on-slug-change` write
+  rows shaped for `@payloadcms/plugin-redirects` (`from`, and `to` as a reference) without
+  importing it.
 
 MIT licensed. Source: [custard-kit](https://github.com/QuiteCustard/custard-kit).

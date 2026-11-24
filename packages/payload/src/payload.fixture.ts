@@ -1,6 +1,7 @@
 import type {
   Access,
   BasePayload,
+  CollectionAfterChangeHook,
   FieldAccess,
   FieldHook,
   PayloadRequest,
@@ -69,6 +70,21 @@ export const fieldHookArgs = (args: {
     data,
   } as Parameters<FieldHook>[0]
 }
+
+/** A collection afterChange hook's args, with the collection reduced to its slug. */
+export const afterChangeArgs = (args: {
+  collection: string
+  doc: unknown
+  previousDoc: unknown
+  operation: 'create' | 'update'
+  req: PayloadRequest
+}): Parameters<CollectionAfterChangeHook>[0] =>
+  ({
+    ...args,
+    collection: { slug: args.collection },
+    context: {},
+    data: {},
+  }) as unknown as Parameters<CollectionAfterChangeHook>[0]
 
 /** A request carrying only the parts a helper under test reads. */
 export const requestFixture = (parts: {
